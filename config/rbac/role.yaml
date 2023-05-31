@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - vpn-gw.kube-ovn-operator.com
+  resources:
+  - vpngws
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - vpn-gw.kube-ovn-operator.com
+  resources:
+  - vpngws/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - vpn-gw.kube-ovn-operator.com
+  resources:
+  - vpngws/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- vpn-gw_v1_vpngw.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
