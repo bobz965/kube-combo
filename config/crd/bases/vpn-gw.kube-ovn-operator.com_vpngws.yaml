@@ -22,8 +22,11 @@ spec:
     - jsonPath: .status.ip
       name: IP
       type: string
-    - jsonPath: .status.sslVpnConfigMap
-      name: SslVpnCm
+    - jsonPath: .status.sslVpnGwEnable
+      name: SSLVPN
+      type: string
+    - jsonPath: .status.ipsecVpnGwEnable
+      name: IPSecVPN
       type: string
     name: v1
     schema:
@@ -45,6 +48,9 @@ spec:
           spec:
             description: VpnGwSpec defines the desired state of VpnGw
             properties:
+              EnableIpsecVpn:
+                description: vpn gw enable ipsec vpn
+                type: boolean
               affinity:
                 description: vpn gw pod affinity
                 properties:
@@ -873,19 +879,43 @@ spec:
                         type: array
                     type: object
                 type: object
+              enableSslVpn:
+                description: vpn gw enable ssl vpn
+                type: boolean
               ip:
                 description: vpn gw static ip
+                type: string
+              ipsecVpnImage:
+                description: ipsec use strongswan server all ipsec vpn spec start
+                  with ipsec
+                type: string
+              ovpnSslVpnPort:
+                description: ovpn ssl vpn port, default 1194 or 443, 1194 for udp,
+                  443 for tcp
+                type: integer
+              ovpnSslVpnProto:
+                description: ssl vpn use openvpn server all ssl vpn spec start with
+                  ovpn ovpn ssl vpn proto, udp or tcp, udp probably is better
+                type: string
+              ovpnSslVpnSubnet:
+                description: ovpn ssl vpn clinet server subnet cidr 10.240.0.0/255.255.0.0
+                type: string
+              ovpnSslVpnSvcCidr:
+                description: if use kube-ovn default subnet, svc cidr probably is
+                  different, should be set pod svc cidr 10.96.0.0/255.240.0.0
                 type: string
               selector:
                 description: vpn gw pod node selector
                 items:
                   type: string
                 type: array
-              sslVpnConfigMap:
-                description: ssl vpn gw use a configmap to store ssl vpn config
+              sslVpnImage:
+                description: ssl vpn server image, openvpn server
                 type: string
               subnet:
-                description: kube-ovn subnet has spec vpc, so not specify vpc here
+                description: pod subnet the vpn gw server pod running inside in this
+                  pod user can access all pod in this subnet via vpn gw if use subnet
+                  lb vip in this subnet, so no need svc cidr in this case
                 type: string
               tolerations:
                 description: vpn gw pod tolerations
@@ -928,10 +958,17 @@ spec:
                   type: object
                 type: array
             required:
+            - EnableIpsecVpn
             - affinity
+            - enableSslVpn
             - ip
+            - ipsecVpnImage
+            - ovpnSslVpnPort
+            - ovpnSslVpnProto
+            - ovpnSslVpnSubnet
+            - ovpnSslVpnSvcCidr
             - selector
-            - sslVpnConfigMap
+            - sslVpnImage
             - subnet
             - tolerations
             type: object
@@ -1838,11 +1875,27 @@ spec:
                 type: array
               ip:
                 type: string
+              ipsecVpnGwEnable:
+                type: boolean
+              ipsecVpnImage:
+                type: string
+              ovpnSslVpnPodSubnet:
+                type: string
+              ovpnSslVpnPort:
+                type: integer
+              ovpnSslVpnProto:
+                type: string
+              ovpnSslVpnSubnet:
+                type: string
+              ovpnSslVpnSvcCidr:
+                type: string
               selector:
                 items:
                   type: string
                 type: array
-              sslVpnConfigMap:
+              sslVpnGwEnable:
+                type: boolean
+              sslVpnImage:
                 type: string
               subnet:
                 type: string
@@ -1888,8 +1941,16 @@ spec:
             required:
             - affinity
             - ip
+            - ipsecVpnGwEnable
+            - ipsecVpnImage
+            - ovpnSslVpnPodSubnet
+            - ovpnSslVpnPort
+            - ovpnSslVpnProto
+            - ovpnSslVpnSubnet
+            - ovpnSslVpnSvcCidr
             - selector
-            - sslVpnConfigMap
+            - sslVpnGwEnable
+            - sslVpnImage
             - subnet
             - tolerations
             type: object

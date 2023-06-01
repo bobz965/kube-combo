@@ -29,28 +29,59 @@ type VpnGwSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// kube-ovn subnet has spec vpc, so not specify vpc here
+	// pod subnet
+	// the vpn gw server pod running inside in this pod
+	// user can access all pod in this subnet via vpn gw
+	// if use subnet lb vip in this subnet, so no need svc cidr in this case
 	Subnet string `json:"subnet"`
 	// vpn gw static ip
 	Ip string `json:"ip"`
-	// ssl vpn gw use a configmap to store ssl vpn config
-	SslVpnConfigMap string `json:"sslVpnConfigMap"`
 	// vpn gw pod node selector
 	Selector []string `json:"selector"`
 	// vpn gw pod tolerations
 	Tolerations []corev1.Toleration `json:"tolerations"`
 	// vpn gw pod affinity
 	Affinity corev1.Affinity `json:"affinity"`
+
+	// vpn gw enable ssl vpn
+	EnableSslVpn bool `json:"enableSslVpn"`
+	// ssl vpn use openvpn server
+	// all ssl vpn spec start with ovpn
+	// ovpn ssl vpn proto, udp or tcp, udp probably is better
+	OvpnProto string `json:"ovpnSslVpnProto"`
+	// ovpn ssl vpn port, default 1194 or 443, 1194 for udp, 443 for tcp
+	OvpnPort int `json:"ovpnSslVpnPort"`
+	// ovpn ssl vpn clinet server subnet cidr 10.240.0.0/255.255.0.0
+	OvpnSubnetCidr string `json:"ovpnSslVpnSubnet"`
+	// if use kube-ovn default subnet, svc cidr probably is different, should be set
+	// pod svc cidr 10.96.0.0/255.240.0.0
+	OvpnSvcCidr string `json:"ovpnSslVpnSvcCidr"`
+	// ssl vpn server image, openvpn server
+	SslVpnImage string `json:"sslVpnImage"`
+
+	// vpn gw enable ipsec vpn
+	EnableIpsecVpn bool `json:"EnableIpsecVpn"`
+	// ipsec use strongswan server
+	// all ipsec vpn spec start with ipsec
+	IpsecVpnImage string `json:"ipsecVpnImage"`
 }
 
 // VpnGwStatus defines the observed state of VpnGw
 type VpnGwStatus struct {
-	Subnet          string              `json:"subnet" patchStrategy:"merge"`
-	Ip              string              `json:"ip" patchStrategy:"merge"`
-	SslVpnConfigMap string              `json:"sslVpnConfigMap" patchStrategy:"merge"`
-	Selector        []string            `json:"selector" patchStrategy:"merge"`
-	Tolerations     []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`
-	Affinity        corev1.Affinity     `json:"affinity" patchStrategy:"merge"`
+	Subnet            string              `json:"subnet" patchStrategy:"merge"`
+	Ip                string              `json:"ip" patchStrategy:"merge"`
+	Selector          []string            `json:"selector" patchStrategy:"merge"`
+	Tolerations       []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`
+	Affinity          corev1.Affinity     `json:"affinity" patchStrategy:"merge"`
+	SslVpnGwEnable    bool                `json:"sslVpnGwEnable"`
+	SslVpnImage       string              `json:"sslVpnImage"`
+	OvpnProto         string              `json:"ovpnSslVpnProto"`
+	OvpnPort          int                 `json:"ovpnSslVpnPort"`
+	OvpnSubnetCidr    string              `json:"ovpnSslVpnSubnet"`
+	OvpnPodSubnetCidr string              `json:"ovpnSslVpnPodSubnet"`
+	OvpnSvcCidr       string              `json:"ovpnSslVpnSvcCidr"`
+	IpsecVpnGwEnable  bool                `json:"ipsecVpnGwEnable"`
+	IpsecVpnImage     string              `json:"ipsecVpnImage"`
 
 	// Conditions store the status conditions of the vpn gw instances
 	// +operator-sdk:csv:customresourcedefinitions:type=status
@@ -62,7 +93,8 @@ type VpnGwStatus struct {
 //+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="Subnet",type=string,JSONPath=`.status.subnet`
 //+kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.ip`
-//+kubebuilder:printcolumn:name="SslVpnCm",type=string,JSONPath=`.status.sslVpnConfigMap`
+//+kubebuilder:printcolumn:name="SSLVPN",type=string,JSONPath=`.status.sslVpnGwEnable`
+//+kubebuilder:printcolumn:name="IPSecVPN",type=string,JSONPath=`.status.ipsecVpnGwEnable`
 
 // VpnGw is the Schema for the vpngws API
 type VpnGw struct {
