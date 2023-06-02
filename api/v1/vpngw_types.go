@@ -35,7 +35,8 @@ type VpnGwSpec struct {
 	// if use subnet lb vip in this subnet, so no need svc cidr in this case
 	Subnet string `json:"subnet"`
 	// vpn gw static ip
-	Ip string `json:"ip"`
+	Ip       string `json:"ip"`
+	Replicas int32  `json:"replicas"`
 	// vpn gw pod node selector
 	Selector []string `json:"selector"`
 	// vpn gw pod tolerations
@@ -48,7 +49,8 @@ type VpnGwSpec struct {
 	// ssl vpn use openvpn server
 	// all ssl vpn spec start with ovpn
 	// ovpn ssl vpn proto, udp or tcp, udp probably is better
-	OvpnProto string `json:"ovpnProto"`
+	OvpnCipher string `json:"ovpnCipher"`
+	OvpnProto  string `json:"ovpnProto"`
 	// ovpn ssl vpn port, default 1194 for udp, 443 for tcp
 	OvpnPort int `json:"ovpnPort"`
 	// ovpn ssl vpn clinet server subnet cidr 10.240.0.0/255.255.0.0
@@ -68,18 +70,20 @@ type VpnGwSpec struct {
 
 // VpnGwStatus defines the observed state of VpnGw
 type VpnGwStatus struct {
-	Subnet           string              `json:"subnet" patchStrategy:"merge"`
-	Ip               string              `json:"ip" patchStrategy:"merge"`
-	Selector         []string            `json:"selector" patchStrategy:"merge"`
-	Tolerations      []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`
-	Affinity         corev1.Affinity     `json:"affinity" patchStrategy:"merge"`
-	SslVpnGwEnable   bool                `json:"sslVpnGwEnable" patchStrategy:"merge"`
-	SslVpnImage      string              `json:"sslVpnImage" patchStrategy:"merge"`
-	OvpnProto        string              `json:"ovpnProto" patchStrategy:"merge"`
-	OvpnPort         int                 `json:"ovpnPort" patchStrategy:"merge"`
-	OvpnSubnetCidr   string              `json:"ovpnSubnetCidr" patchStrategy:"merge"`
-	IpsecVpnGwEnable bool                `json:"ipsecVpnGwEnable" patchStrategy:"merge"`
-	IpsecVpnImage    string              `json:"ipsecVpnImage" patchStrategy:"merge"`
+	Subnet         string              `json:"subnet" patchStrategy:"merge"`
+	Ip             string              `json:"ip" patchStrategy:"merge"`
+	Replicas       int32               `json:"replicas" patchStrategy:"merge"`
+	Selector       []string            `json:"selector" patchStrategy:"merge"`
+	Tolerations    []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`
+	Affinity       corev1.Affinity     `json:"affinity" patchStrategy:"merge"`
+	EnableSslVpn   bool                `json:"enableSslVpn" patchStrategy:"merge"`
+	SslVpnImage    string              `json:"sslVpnImage" patchStrategy:"merge"`
+	OvpnCipher     string              `json:"ovpnCipher" patchStrategy:"merge"`
+	OvpnProto      string              `json:"ovpnProto" patchStrategy:"merge"`
+	OvpnPort       int                 `json:"ovpnPort" patchStrategy:"merge"`
+	OvpnSubnetCidr string              `json:"ovpnSubnetCidr" patchStrategy:"merge"`
+	EnableIpsecVpn bool                `json:"enableIpsecVpn" patchStrategy:"merge"`
+	IpsecVpnImage  string              `json:"ipsecVpnImage" patchStrategy:"merge"`
 
 	// Conditions store the status conditions of the vpn gw instances
 	// +operator-sdk:csv:customresourcedefinitions:type=status
@@ -92,6 +96,7 @@ type VpnGwStatus struct {
 //+kubebuilder:printcolumn:name="Subnet",type=string,JSONPath=`.status.subnet`
 //+kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.ip`
 //+kubebuilder:printcolumn:name="SSLVPN",type=string,JSONPath=`.status.sslVpnGwEnable`
+// +kubebuilder:printcolumn:name="OvpnCipher",type=string,JSONPath=`.status.ovpnCipher`
 //+kubebuilder:printcolumn:name="IPSecVPN",type=string,JSONPath=`.status.ipsecVpnGwEnable`
 
 // VpnGw is the Schema for the vpngws API

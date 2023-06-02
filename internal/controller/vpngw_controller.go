@@ -31,8 +31,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	vpngwv1 "github.com/bobz965/kube-ovn-operator/api/v1"
@@ -42,12 +42,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var (
-	VpcVpnGatewayCmVersion = ""
-	// TODO:// 需要跟踪cm的版本，如果cm的版本发生变化，需要重新启动vpn gateway
-
-)
-
 const (
 	SslVpnServer   = "ssl-vpn-server"
 	IpsecVpnServer = "ipsec-vpn-server"
@@ -55,11 +49,16 @@ const (
 	SslVpnStartUpCMD   = "/etc/openvpn/setup/configure.sh"
 	IpsecVpnStartUpCMD = "/etc/ipsec/setup/configure.sh"
 
-	SslVpnGatewayLabel   = "ssl-vpn-gateway"
-	IpsecVpnGatewayLabel = "ipsec-vpn-gateway"
+	EnableSslVpnLabel   = "enable_ssl_vpn"
+	EnableIpsecVpnLabel = "enable_ipsec_vpn"
 
-	KubeovnIpAddressAnnotation     = "ovn.kubernetes.io/ip_address"
+	KubeovnIpAddressAnnotation = "ovn.kubernetes.io/ip_address"
+	// TODO:// HA use ip pool
 	KubeovnLogicalSwitchAnnotation = "ovn.kubernetes.io/logical_switch"
+
+	OvpnProtoKey  = "ovpn_proto"
+	OvpnPortKey   = "ovpn_port"
+	OvpnCipherKey = "ovpn_cipher"
 )
 
 // VpnGwReconciler reconciles a VpnGw object
@@ -68,22 +67,60 @@ type VpnGwReconciler struct {
 	Log       logr.Logger
 	Scheme    *runtime.Scheme
 	Namespace string
-	Handler   func(logr.Logger, string) SyncState
+	Handler   func(gw *vpngwv1.VpnGw, req ctrl.Request) SyncState
 	Reload    chan event.GenericEvent
 }
 
-func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Request) error {
+func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string) error {
 	if gw.Spec.Subnet == "" {
 		err := fmt.Errorf("vpn gw subnet is required")
-		r.Log.Error(err, "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
+		r.Log.Error(err, "name", namespacedName)
 		return err
+	}
+	if gw.Spec.Ip == "" {
+		r.Log.Info("vpn gw ip should random allocate", "name", namespacedName)
+	}
+	if gw.Spec.Replicas < 0 || gw.Spec.Replicas > 2 {
+		err := fmt.Errorf("vpn gw replicas should be 1 or 2")
+		r.Log.Error(err, "name", namespacedName)
+		return err
+	}
+	if gw.Spec.EnableSslVpn {
+		if gw.Spec.OvpnCipher == "" {
+			err := fmt.Errorf("ssl vpn cipher is required")
+			r.Log.Error(err, "name", namespacedName)
+			return err
+		}
+		if gw.Spec.OvpnProto == "" {
+			err := fmt.Errorf("ssl vpn proto is required")
+			r.Log.Error(err, "name", namespacedName)
+			return err
+		}
+		if gw.Spec.OvpnPort == 0 {
+			err := fmt.Errorf("ssl vpn port is required")
+			r.Log.Error(err, "name", namespacedName)
+			return err
+		}
+		if gw.Spec.OvpnSubnetCidr == "" {
+			err := fmt.Errorf("ssl vpn subnet cidr is required")
+			r.Log.Error(err, "name", namespacedName)
+			return err
+		}
+		if gw.Spec.OvpnProto != "udp" && gw.Spec.OvpnProto != "tcp" {
+			err := fmt.Errorf("ssl vpn proto should be udp or tcp")
+			r.Log.Error(err, "name", namespacedName)
+			return err
+		}
+		if gw.Spec.SslVpnImage == "" {
+			err := fmt.Errorf("ssl vpn image is required")
+			r.Log.Error(err, "name", namespacedName)
+			return err
+		}
 	}
 	return nil
 }
 
-func (r *VpnGwReconciler) isVpnGwChanged(gw *vpngwv1.VpnGw) bool {
-	// compare spec and status to check if vpn gw changed
-	// TODO
+func (r *VpnGwReconciler) isChanged(gw *vpngwv1.VpnGw) bool {
 	if gw.Status.Subnet == "" && gw.Spec.Subnet != "" {
 		// subnet not support change
 		gw.Status.Subnet = gw.Spec.Subnet
@@ -91,6 +128,34 @@ func (r *VpnGwReconciler) isVpnGwChanged(gw *vpngwv1.VpnGw) bool {
 	}
 	if gw.Status.Ip != gw.Spec.Ip {
 		gw.Status.Ip = gw.Spec.Ip
+		return true
+	}
+	if gw.Status.Replicas != gw.Spec.Replicas {
+		gw.Status.Replicas = gw.Spec.Replicas
+		return true
+	}
+	if gw.Status.EnableSslVpn != gw.Spec.EnableSslVpn {
+		gw.Status.EnableSslVpn = gw.Spec.EnableSslVpn
+		return true
+	}
+	if gw.Status.EnableIpsecVpn != gw.Spec.EnableIpsecVpn {
+		gw.Status.EnableIpsecVpn = gw.Spec.EnableIpsecVpn
+		return true
+	}
+	if gw.Status.OvpnCipher != gw.Spec.OvpnCipher {
+		gw.Status.OvpnCipher = gw.Spec.OvpnCipher
+		return true
+	}
+	if gw.Status.OvpnProto != gw.Spec.OvpnProto {
+		gw.Status.OvpnProto = gw.Spec.OvpnProto
+		return true
+	}
+	if gw.Status.OvpnPort != gw.Spec.OvpnPort {
+		gw.Status.OvpnPort = gw.Spec.OvpnPort
+		return true
+	}
+	if gw.Status.OvpnSubnetCidr != gw.Spec.OvpnSubnetCidr {
+		gw.Status.OvpnSubnetCidr = gw.Spec.OvpnSubnetCidr
 		return true
 	}
 	if !reflect.DeepEqual(gw.Spec.Selector, gw.Status.Selector) {
@@ -108,15 +173,12 @@ func (r *VpnGwReconciler) isVpnGwChanged(gw *vpngwv1.VpnGw) bool {
 	return false
 }
 
-func (*VpnGwReconciler) genSslVpnGwStatefulSet(gw *vpngwv1.VpnGw, oldSts *appsv1.StatefulSet) (newSts *appsv1.StatefulSet) {
-	replicas := int32(1)
-	// TODO: HA
+func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.StatefulSet) (newSts *appsv1.StatefulSet) {
+	replicas := gw.Spec.Replicas
+	// TODO: HA may use router lb external eip as fontend
 	allowPrivilegeEscalation := true
 	privileged := true
-	labels := map[string]string{
-		SslVpnGatewayLabel:   strconv.FormatBool(gw.Spec.EnableSslVpn),
-		IpsecVpnGatewayLabel: strconv.FormatBool(gw.Spec.EnableIpsecVpn),
-	}
+	labels := labelsForVpnGw(gw)
 	newPodAnnotations := map[string]string{}
 	if oldSts != nil && len(oldSts.Annotations) != 0 {
 		newPodAnnotations = oldSts.Annotations
@@ -141,10 +203,29 @@ func (*VpnGwReconciler) genSslVpnGwStatefulSet(gw *vpngwv1.VpnGw, oldSts *appsv1
 	containers := []corev1.Container{}
 	if gw.Spec.EnableSslVpn {
 		sslContainer := corev1.Container{
-			Name:            SslVpnServer,
-			Image:           gw.Spec.SslVpnImage,
-			Command:         []string{"bash"},
-			Args:            []string{"-c", "sleep infinity"},
+			Name:    SslVpnServer,
+			Image:   gw.Spec.SslVpnImage,
+			Command: []string{"bash"},
+			Args:    []string{"-c", "sleep infinity"},
+			Ports: []corev1.ContainerPort{{
+				ContainerPort: int32(gw.Spec.OvpnPort),
+				Name:          SslVpnServer,
+				Protocol:      corev1.Protocol(gw.Spec.OvpnProto),
+			}},
+			Env: []corev1.EnvVar{
+				{
+					Name:  OvpnProtoKey,
+					Value: gw.Spec.OvpnProto,
+				},
+				{
+					Name:  OvpnPortKey,
+					Value: strconv.Itoa(gw.Spec.OvpnPort),
+				},
+				{
+					Name:  OvpnCipherKey,
+					Value: gw.Spec.OvpnCipher,
+				},
+			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			SecurityContext: &corev1.SecurityContext{
 				Privileged:               &privileged,
@@ -197,98 +278,70 @@ func (*VpnGwReconciler) genSslVpnGwStatefulSet(gw *vpngwv1.VpnGw, oldSts *appsv1
 		},
 	}
 
+	// set gw instance as the owner and controller
+	controllerutil.SetControllerReference(gw, newSts, r.Scheme)
 	return
 }
 
-func (r *VpnGwReconciler) updateVpnGwStatus(gw *vpngwv1.VpnGw) error {
-	var changed bool
-	if gw.Status.Subnet == "" && gw.Status.Subnet != gw.Spec.Subnet {
-		// subnet not support update
-		gw.Status.Subnet = gw.Spec.Subnet
-		changed = true
+// belonging to the given vpn gw CR name.
+func labelsForVpnGw(gw *vpngwv1.VpnGw) map[string]string {
+	return map[string]string{"app": "vpngw",
+		EnableSslVpnLabel:   strconv.FormatBool(gw.Spec.EnableSslVpn),
+		EnableIpsecVpnLabel: strconv.FormatBool(gw.Spec.EnableIpsecVpn),
 	}
-	if gw.Status.Ip != gw.Spec.Ip {
-		gw.Status.Ip = gw.Spec.Ip
-		changed = true
-	}
-	if !reflect.DeepEqual(gw.Spec.Selector, gw.Status.Selector) {
-		gw.Status.Selector = gw.Spec.Selector
-		changed = true
-	}
-	if !reflect.DeepEqual(gw.Spec.Tolerations, gw.Status.Tolerations) {
-		gw.Status.Tolerations = gw.Spec.Tolerations
-		changed = true
-	}
-	if !reflect.DeepEqual(gw.Spec.Affinity, gw.Status.Affinity) {
-		gw.Status.Affinity = gw.Spec.Affinity
-		changed = true
-	}
-
-	if changed {
-		return r.Status().Update(context.Background(), gw)
-	}
-	return nil
 }
 
-func (r *VpnGwReconciler) handleAddOrUpdateVpcVpnGateway(gw *vpngwv1.VpnGw, req ctrl.Request) error {
+func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Request) SyncState {
 	// create vpn gw statefulset
-	key := fmt.Sprintf("%s/%s", gw.Namespace, gw.Name)
-	r.Log.Info("controller", "VpnGwReconciler", "start handleAddOrUpdateVpcVpnGateway", key)
-	defer r.Log.Info("controller", "VpnGwReconciler", "end handleAddOrUpdateVpcVpnGateway", key)
+	namespacedName := req.NamespacedName.String()
+	r.Log.Info("start handleAddOrUpdateVpnGw", namespacedName)
+	defer r.Log.Info("end handleAddOrUpdateVpnGw", namespacedName)
 
-	if err := r.validateVpnGw(gw, req); err != nil {
-		r.Log.Error(err, "controller", "VpnGwReconciler", "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
-		return err
-	}
 	// create or update statefulset
 	var needToCreate, needToUpdate bool
-	oldSts, err := r.getStatefulSet(context.Background(), req.NamespacedName)
+	oldSts := &appsv1.StatefulSet{}
+	err := r.Get(context.Background(), req.NamespacedName, oldSts)
 	if err != nil {
-		r.Log.Error(err, "controller", "VpnGwReconciler", "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
-		return err
-	}
-	if oldSts == nil {
-		needToCreate = true
-	}
-
-	// subnet, err := r.getKubeovnSubnet(context.Background(), req.NamespacedName)
-	// if err != nil {
-	// 	r.Log.Error(err, "controller", "VpnGwReconciler", "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
-	// 	return err
-	// }
-	if needToCreate {
-		newSts := r.genSslVpnGwStatefulSet(gw, nil)
-		err = r.Create(context.Background(), newSts)
-		if err != nil {
-			r.Log.Error(err, "controller", "VpnGwReconciler", "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
-			return err
+		if apierrors.IsNotFound(err) {
+			needToCreate = true
+		} else {
+			r.Log.Error(err, "name", namespacedName)
+			return SyncStateError
 		}
 	}
-	gw, err = r.getVpnGw(context.Background(), req.NamespacedName)
-	gw = gw.DeepCopy()
-	// gw.Status.Subnet = subnet.Name
-	// gw.Status.OvpnPodSubnetCidr = subnet.Spec.PodSubnet
-	if err != nil {
-		r.Log.Error(err, "controller", "VpnGwReconciler", "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
-		return err
+	if needToCreate {
+		newSts := r.statefulSetForVpnGw(gw, nil)
+		err = r.Create(context.Background(), newSts)
+		if err != nil {
+			r.Log.Error(err, "name", namespacedName)
+			return SyncStateError
+		}
+		err = r.Status().Update(context.Background(), gw)
+		if err != nil {
+			r.Log.Error(err, "name", namespacedName)
+			return SyncStateError
+		}
+		return SyncStateSuccess
 	}
-	if !needToCreate && r.isVpnGwChanged(gw) {
+	gw = gw.DeepCopy()
+	if !needToCreate && r.isChanged(gw) {
 		needToUpdate = true
 	}
 	if needToUpdate {
-		newSts := r.genSslVpnGwStatefulSet(gw, oldSts.DeepCopy())
+		newSts := r.statefulSetForVpnGw(gw, oldSts.DeepCopy())
 		err = r.Update(context.Background(), newSts)
 		if err != nil {
-			r.Log.Error(err, "controller", "VpnGwReconciler", "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
-			return err
+			r.Log.Error(err, "name", namespacedName)
+			return SyncStateError
 		}
+		err = r.Status().Update(context.Background(), gw)
+		if err != nil {
+			r.Log.Error(err, "name", namespacedName)
+			return SyncStateError
+		}
+		return SyncStateSuccess
 	}
-
-	if err = r.updateVpnGwStatus(gw); err != nil {
-		r.Log.Error(err, "controller", "VpnGwReconciler", "name", req.NamespacedName.String(), "vpnGw", dumpResource(gw))
-		return err
-	}
-	return nil
+	return SyncStateSuccess
 }
 
 //+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws,verbs=get;list;watch;create;update;patch;delete
@@ -301,27 +354,32 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpcVpnGateway(gw *vpngwv1.VpnGw, req 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.Log = ctrllog.FromContext(ctx)
-	r.Log.Info("controller", "VpnGwReconciler", "start reconcile", req.NamespacedName.String())
-	defer r.Log.Info("controller", "VpnGwReconciler", "end reconcile", req.NamespacedName.String())
+	// delete vpn gw itself, its owned statefulset will be deleted automatically
+	namespacedName := req.NamespacedName.String()
+	r.Log.Info("start reconcile", namespacedName)
+	defer r.Log.Info("end reconcile", namespacedName)
 	updates.Inc()
 
-	var vpnGw *vpngwv1.VpnGw
-	var err error
-	vpnGw, err = r.getVpnGw(ctx, req.NamespacedName)
+	// fetch vpn gw
+	gw, err := r.getVpnGw(ctx, req.NamespacedName)
 	if err != nil {
 		r.Log.Error(err, "failed to get vpn gw")
 		return ctrl.Result{}, err
 	}
-	// delete
-
-	// add or update
-	err = r.handleAddOrUpdateVpcVpnGateway(vpnGw, req)
-	if err != nil {
-		r.Log.Error(err, "failed to handle or update vpn gw")
+	if gw == nil {
+		return ctrl.Result{}, nil
+	}
+	// validate vpn gw
+	if err := r.validateVpnGw(gw, namespacedName); err != nil {
+		r.Log.Error(err, "name", namespacedName)
 		return ctrl.Result{}, err
 	}
-	res := r.Handler(r.Log, req.NamespacedName.String())
+	// fetch vpn gw statefulset, if not exist, create it
+
+	r.Handler = r.handleAddOrUpdateVpnGw
+	// TODO:// Handler should set in main.go
+
+	res := r.Handler(gw, req)
 	switch res {
 	case SyncStateError:
 		updateErrors.Inc()
@@ -358,35 +416,8 @@ func (r *VpnGwReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// TODO: vpn gw server 基于sts来维护，后续需要通过owner机制来自动化维护依赖与被依赖的维护关系，包括finalizer的维护以及owner的维护。
-// TODO: vpn gw 启动变量 基于cm来维护，后续需要通过owner机制来自动化维护依赖与被依赖的维护关系，包括finalizer的维护以及owner的维护。
-
-// func (r *VpnGwReconciler) getKubeovnSubnet(ctx context.Context, name types.NamespacedName) (*kubeovnv1.Subnet, error) {
-// 	var res kubeovnv1.Subnet
-// 	err := r.Get(ctx, name, &res)
-// 	if apierrors.IsNotFound(err) { // in case of delete, get fails and we need to pass nil to the handler
-// 		return nil, nil
-// 	}
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &res, nil
-// }
-
 func (r *VpnGwReconciler) getVpnGw(ctx context.Context, name types.NamespacedName) (*vpngwv1.VpnGw, error) {
 	var res vpngwv1.VpnGw
-	err := r.Get(ctx, name, &res)
-	if apierrors.IsNotFound(err) { // in case of delete, get fails and we need to pass nil to the handler
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &res, nil
-}
-
-func (r *VpnGwReconciler) getStatefulSet(ctx context.Context, name types.NamespacedName) (*appsv1.StatefulSet, error) {
-	var res appsv1.StatefulSet
 	err := r.Get(ctx, name, &res)
 	if apierrors.IsNotFound(err) { // in case of delete, get fails and we need to pass nil to the handler
 		return nil, nil
