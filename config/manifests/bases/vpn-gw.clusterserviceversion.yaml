@@ -1,0 +1,48 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: vpn-gw.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: VpnGw is the Schema for the vpngws API
+      displayName: Vpn Gw
+      kind: VpnGw
+      name: vpngws.vpn-gw.kube-ovn-operator.com
+      statusDescriptors:
+      - description: Conditions store the status conditions of the vpn gw instances
+        displayName: Conditions
+        path: conditions
+      version: v1
+  description: kube-ovn-operator
+  displayName: kube-ovn-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - kube-ovn-operator
+  links:
+  - name: Vpn Gw
+    url: https://vpn-gw.domain
+  maturity: alpha
+  provider:
+    name: kube-ovn-operator
+  version: 0.0.0

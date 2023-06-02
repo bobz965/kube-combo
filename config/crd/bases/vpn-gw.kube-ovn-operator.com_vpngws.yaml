@@ -25,6 +25,9 @@ spec:
     - jsonPath: .status.sslVpnGwEnable
       name: SSLVPN
       type: string
+    - jsonPath: .status.ovpnCipher
+      name: OvpnCipher
+      type: string
     - jsonPath: .status.ipsecVpnGwEnable
       name: IPSecVPN
       type: string
@@ -889,16 +892,21 @@ spec:
                 description: ipsec use strongswan server all ipsec vpn spec start
                   with ipsec
                 type: string
+              ovpnCipher:
+                description: ssl vpn use openvpn server all ssl vpn spec start with
+                  ovpn ovpn ssl vpn proto, udp or tcp, udp probably is better
+                type: string
               ovpnPort:
                 description: ovpn ssl vpn port, default 1194 for udp, 443 for tcp
                 type: integer
               ovpnProto:
-                description: ssl vpn use openvpn server all ssl vpn spec start with
-                  ovpn ovpn ssl vpn proto, udp or tcp, udp probably is better
                 type: string
               ovpnSubnetCidr:
                 description: ovpn ssl vpn clinet server subnet cidr 10.240.0.0/255.255.0.0
                 type: string
+              replicas:
+                format: int32
+                type: integer
               selector:
                 description: vpn gw pod node selector
                 items:
@@ -961,9 +969,11 @@ spec:
             - enableSslVpn
             - ip
             - ipsecVpnImage
+            - ovpnCipher
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
+            - replicas
             - selector
             - sslVpnImage
             - subnet
@@ -1870,11 +1880,15 @@ spec:
                   - type
                   type: object
                 type: array
+              enableIpsecVpn:
+                type: boolean
+              enableSslVpn:
+                type: boolean
               ip:
                 type: string
-              ipsecVpnGwEnable:
-                type: boolean
               ipsecVpnImage:
+                type: string
+              ovpnCipher:
                 type: string
               ovpnPort:
                 type: integer
@@ -1882,12 +1896,13 @@ spec:
                 type: string
               ovpnSubnetCidr:
                 type: string
+              replicas:
+                format: int32
+                type: integer
               selector:
                 items:
                   type: string
                 type: array
-              sslVpnGwEnable:
-                type: boolean
               sslVpnImage:
                 type: string
               subnet:
@@ -1933,14 +1948,16 @@ spec:
                 type: array
             required:
             - affinity
+            - enableIpsecVpn
+            - enableSslVpn
             - ip
-            - ipsecVpnGwEnable
             - ipsecVpnImage
+            - ovpnCipher
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
+            - replicas
             - selector
-            - sslVpnGwEnable
             - sslVpnImage
             - subnet
             - tolerations

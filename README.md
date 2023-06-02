@@ -1,6 +1,13 @@
 # kube-ovn-operator
 
-## 1.init
+该项目用于在 kube-ovn-cni 的一个**补充**，用于实现一些 kube-ovn-cni 中属于间接关联的一些网络应用。直接关联的网络功能应直接在 kube-ovn 中实现。
+为了保持该项目的定位的清晰和轻量：
+
+- 该项目最多会对 kube-ovn crd 的存在与否做一些 get 校验，目前不会 CRUD kube-ovn crd 资源。
+- 该项目只会实现 kube-ovn 中所不直接具备的 crd，不会提供关于某个用户场景的需求的多个 CRD 的再次封装为一个新的业务网络功能的CRD。
+- 在使用上，业务需求方负责对基础 CRD API 接口进行编排，需直接对接 kube-ovn的crd，或者，该项目提供的 crd。
+
+## 1. Code init
 
 ``` bash
 
@@ -26,9 +33,49 @@ make manifests
 
 ```
 
-## 2. ssl vpn 设计
+## 2. 设计
 
-该功能基于 openvpn 实现，可以通过公网 ip，在pc，手机客户端直接访问kube-ovn 自定义 vpc subnet 内部的 pod 以及 switch lb
+公网访问方式
 
 - fip
 - router lb （后续的 ha 方案）
+
+### 2.1 ssl vpn
+
+该功能基于 openvpn 实现，可以通过公网 ip，在个人 电脑，手机客户端直接访问 kube-ovn 自定义 vpc subnet 内部的 pod 以及 switch lb 对应是的 svc endpoint。
+
+### 2.2 ipsec vpn 设计
+
+## 3. 维护
+
+基于 olm 来维护， olm 也叫 operator 生命周期管理器， 可以对接到应用商店 kubeapp 。
+
+### 3.1 项目打包
+
+Docker
+
+``` bash
+make docker-build 
+
+make docker-push
+```
+
+OLM
+
+``` bash
+make bundle bundle-build bundle-push
+
+```
+
+
+
+
+
+### 3.2 基于 olm 部署
+
+[operator-sdk 二进制安装方式](https://sdk.operatorframework.io/docs/installation/)
+
+```bash
+# 在 k8s集群安装该项目
+operator-sdk olm install
+```
