@@ -48,14 +48,14 @@ type VpnGwSpec struct {
 	// ssl vpn use openvpn server
 	// all ssl vpn spec start with ovpn
 	// ovpn ssl vpn proto, udp or tcp, udp probably is better
-	OvpnProto string `json:"ovpnSslVpnProto"`
-	// ovpn ssl vpn port, default 1194 or 443, 1194 for udp, 443 for tcp
-	OvpnPort int `json:"ovpnSslVpnPort"`
+	OvpnProto string `json:"ovpnProto"`
+	// ovpn ssl vpn port, default 1194 for udp, 443 for tcp
+	OvpnPort int `json:"ovpnPort"`
 	// ovpn ssl vpn clinet server subnet cidr 10.240.0.0/255.255.0.0
-	OvpnSubnetCidr string `json:"ovpnSslVpnSubnet"`
+	OvpnSubnetCidr string `json:"ovpnSubnetCidr"`
 	// if use kube-ovn default subnet, svc cidr probably is different, should be set
 	// pod svc cidr 10.96.0.0/255.240.0.0
-	OvpnSvcCidr string `json:"ovpnSslVpnSvcCidr"`
+	// OvpnSvcCidr string `json:"ovpnSslVpnSvcCidr"`
 	// ssl vpn server image, openvpn server
 	SslVpnImage string `json:"sslVpnImage"`
 
@@ -68,20 +68,18 @@ type VpnGwSpec struct {
 
 // VpnGwStatus defines the observed state of VpnGw
 type VpnGwStatus struct {
-	Subnet            string              `json:"subnet" patchStrategy:"merge"`
-	Ip                string              `json:"ip" patchStrategy:"merge"`
-	Selector          []string            `json:"selector" patchStrategy:"merge"`
-	Tolerations       []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`
-	Affinity          corev1.Affinity     `json:"affinity" patchStrategy:"merge"`
-	SslVpnGwEnable    bool                `json:"sslVpnGwEnable"`
-	SslVpnImage       string              `json:"sslVpnImage"`
-	OvpnProto         string              `json:"ovpnSslVpnProto"`
-	OvpnPort          int                 `json:"ovpnSslVpnPort"`
-	OvpnSubnetCidr    string              `json:"ovpnSslVpnSubnet"`
-	OvpnPodSubnetCidr string              `json:"ovpnSslVpnPodSubnet"`
-	OvpnSvcCidr       string              `json:"ovpnSslVpnSvcCidr"`
-	IpsecVpnGwEnable  bool                `json:"ipsecVpnGwEnable"`
-	IpsecVpnImage     string              `json:"ipsecVpnImage"`
+	Subnet           string              `json:"subnet" patchStrategy:"merge"`
+	Ip               string              `json:"ip" patchStrategy:"merge"`
+	Selector         []string            `json:"selector" patchStrategy:"merge"`
+	Tolerations      []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`
+	Affinity         corev1.Affinity     `json:"affinity" patchStrategy:"merge"`
+	SslVpnGwEnable   bool                `json:"sslVpnGwEnable" patchStrategy:"merge"`
+	SslVpnImage      string              `json:"sslVpnImage" patchStrategy:"merge"`
+	OvpnProto        string              `json:"ovpnProto" patchStrategy:"merge"`
+	OvpnPort         int                 `json:"ovpnPort" patchStrategy:"merge"`
+	OvpnSubnetCidr   string              `json:"ovpnSubnetCidr" patchStrategy:"merge"`
+	IpsecVpnGwEnable bool                `json:"ipsecVpnGwEnable" patchStrategy:"merge"`
+	IpsecVpnImage    string              `json:"ipsecVpnImage" patchStrategy:"merge"`
 
 	// Conditions store the status conditions of the vpn gw instances
 	// +operator-sdk:csv:customresourcedefinitions:type=status

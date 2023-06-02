@@ -25,3 +25,10 @@ operator-sdk create api --group vpn-gw --version v1 --kind VpnGw --resource --co
 make manifests
 
 ```
+
+## 2. ssl vpn 设计
+
+该功能基于 openvpn 实现，可以通过公网 ip，在pc，手机客户端直接访问kube-ovn 自定义 vpc subnet 内部的 pod 以及 switch lb
+
+- fip
+- router lb （后续的 ha 方案）

@@ -889,20 +889,15 @@ spec:
                 description: ipsec use strongswan server all ipsec vpn spec start
                   with ipsec
                 type: string
-              ovpnSslVpnPort:
-                description: ovpn ssl vpn port, default 1194 or 443, 1194 for udp,
-                  443 for tcp
+              ovpnPort:
+                description: ovpn ssl vpn port, default 1194 for udp, 443 for tcp
                 type: integer
-              ovpnSslVpnProto:
+              ovpnProto:
                 description: ssl vpn use openvpn server all ssl vpn spec start with
                   ovpn ovpn ssl vpn proto, udp or tcp, udp probably is better
                 type: string
-              ovpnSslVpnSubnet:
+              ovpnSubnetCidr:
                 description: ovpn ssl vpn clinet server subnet cidr 10.240.0.0/255.255.0.0
-                type: string
-              ovpnSslVpnSvcCidr:
-                description: if use kube-ovn default subnet, svc cidr probably is
-                  different, should be set pod svc cidr 10.96.0.0/255.240.0.0
                 type: string
               selector:
                 description: vpn gw pod node selector
@@ -910,7 +905,10 @@ spec:
                   type: string
                 type: array
               sslVpnImage:
-                description: ssl vpn server image, openvpn server
+                description: if use kube-ovn default subnet, svc cidr probably is
+                  different, should be set pod svc cidr 10.96.0.0/255.240.0.0 OvpnSvcCidr
+                  string `json:"ovpnSslVpnSvcCidr"` ssl vpn server image, openvpn
+                  server
                 type: string
               subnet:
                 description: pod subnet the vpn gw server pod running inside in this
@@ -963,10 +961,9 @@ spec:
             - enableSslVpn
             - ip
             - ipsecVpnImage
-            - ovpnSslVpnPort
-            - ovpnSslVpnProto
-            - ovpnSslVpnSubnet
-            - ovpnSslVpnSvcCidr
+            - ovpnPort
+            - ovpnProto
+            - ovpnSubnetCidr
             - selector
             - sslVpnImage
             - subnet
@@ -1879,15 +1876,11 @@ spec:
                 type: boolean
               ipsecVpnImage:
                 type: string
-              ovpnSslVpnPodSubnet:
-                type: string
-              ovpnSslVpnPort:
+              ovpnPort:
                 type: integer
-              ovpnSslVpnProto:
+              ovpnProto:
                 type: string
-              ovpnSslVpnSubnet:
-                type: string
-              ovpnSslVpnSvcCidr:
+              ovpnSubnetCidr:
                 type: string
               selector:
                 items:
@@ -1943,11 +1936,9 @@ spec:
             - ip
             - ipsecVpnGwEnable
             - ipsecVpnImage
-            - ovpnSslVpnPodSubnet
-            - ovpnSslVpnPort
-            - ovpnSslVpnProto
-            - ovpnSslVpnSubnet
-            - ovpnSslVpnSvcCidr
+            - ovpnPort
+            - ovpnProto
+            - ovpnSubnetCidr
             - selector
             - sslVpnGwEnable
             - sslVpnImage
