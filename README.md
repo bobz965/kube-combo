@@ -63,7 +63,40 @@ make docker-push
 OLM
 
 ``` bash
-make bundle bundle-build bundle-push
+# make bundle bundle-build bundle-push
+make bundle
+make bundle-build
+make bundle-push
+
+
+## 目前不支持直接测试，必须要先把bundle 传到 registry，有issue记录: https://github.com/operator-framework/operator-sdk/issues/6432
+
+
+# 在 k8s 中运行
+
+## ref https://github.com/operator-framework/operator-lifecycle-manager/releases/tag/v0.24.0
+
+curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.24.0/install.sh -o install.sh
+chmod +x install.sh
+./install.sh v0.24.0
+
+
+# 运行 operator
+
+operator-sdk run bundle registry.cn-hangzhou.aliyuncs.com/bobz/kube-ovn-operator-bundle:v0.0.1
+
+# 检查 operator 已安装
+
+kubectl get csv
+
+
+
+## 基于 kubectl apply 运行一个该 operator 维护的 crd
+
+# 清理该 operator
+k get operator
+
+operator-sdk cleanup vpn-gw.default
 
 ```
 
