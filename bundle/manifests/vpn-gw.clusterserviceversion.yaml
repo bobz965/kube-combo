@@ -21,7 +21,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2023-06-03T10:02:34Z"
+    createdAt: "2023-06-04T02:01:17Z"
     operators.operatorframework.io/builder: operator-sdk-v1.28.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4-alpha
   name: vpn-gw.v0.0.1
@@ -51,7 +51,7 @@ spec:
         - apiGroups:
           - apps
           resources:
-          - deployments
+          - statefulsets
           verbs:
           - create
           - delete
@@ -110,7 +110,7 @@ spec:
           control-plane: controller-manager
         name: vpn-gw-controller-manager
         spec:
-          replicas: 1
+          replicas: 3
           selector:
             matchLabels:
               control-plane: controller-manager

@@ -96,7 +96,7 @@ kubectl get csv
 # 清理该 operator
 k get operator
 
-operator-sdk cleanup vpn-gw.default
+operator-sdk cleanup vpn-gw
 
 ```
 
