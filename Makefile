@@ -34,7 +34,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # IMAGE_TAG_BASE ?= kube-ovn-operator.com/vpn-gw
 IMAGE_TAG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/kube-ovn-operator
-
+SSL_VPN_IMG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/openvpn
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -55,6 +55,7 @@ endif
 #IMG ?= controller:latest
 IMG ?= $(IMAGE_TAG_BASE):latest
 
+SSL_VPN_IMG ?= $(SSL_VPN_IMG_BASE):v$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.26.0
 
@@ -132,6 +133,14 @@ docker-build: test ## Build docker image with the manager.
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
+
+.PHONY: docker-build-ssl-vpn
+docker-build-ssl-vpn: 
+	docker build --network=host -t ${SSL_VPN_IMG} .
+
+.PHONY: docker-push-ssl-vpn
+docker-push-ssl-vpn: 
+	docker push ${SSL_VPN_IMG}
 
 # PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
