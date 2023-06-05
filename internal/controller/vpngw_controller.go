@@ -201,8 +201,7 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 		sslContainer := corev1.Container{
 			Name:    SslVpnServer,
 			Image:   gw.Spec.SslVpnImage,
-			Command: []string{"bash"},
-			Args:    []string{"-c", "sleep infinity"},
+			Command: []string{SslVpnStartUpCMD},
 			Ports: []corev1.ContainerPort{{
 				ContainerPort: int32(gw.Spec.OvpnPort),
 				Name:          SslVpnServer,

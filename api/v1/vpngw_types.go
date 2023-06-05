@@ -53,10 +53,10 @@ type VpnGwSpec struct {
 	OvpnProto  string `json:"ovpnProto"`
 	// ovpn ssl vpn port, default 1194 for udp, 443 for tcp
 	OvpnPort int `json:"ovpnPort"`
-	// ovpn ssl vpn clinet server subnet cidr 10.240.0.0/255.255.0.0
+	// ovpn ssl vpn clinet server subnet cidr 10.240.0.0/16
 	OvpnSubnetCidr string `json:"ovpnSubnetCidr"`
 	// if use kube-ovn default subnet, svc cidr probably is different, should be set
-	// pod svc cidr 10.96.0.0/255.240.0.0
+	// pod svc cidr 10.96.0.0/20
 	// OvpnSvcCidr string `json:"ovpnSslVpnSvcCidr"`
 	// ssl vpn server image, openvpn server
 	SslVpnImage string `json:"sslVpnImage"`

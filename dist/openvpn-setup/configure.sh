@@ -47,20 +47,21 @@ FORMATTED_SEARCH=""
 for DOMAIN in $SEARCH; do
   FORMATTED_SEARCH="${FORMATTED_SEARCH}push \"dhcp-option DOMAIN-SEARCH ${DOMAIN}\"\n"
 done
+
+OVPN_NETWORK="$(echo $OVPN_SUBNET_CIDR | tr "/" " " | awk '{ print $1 }')"
+ovpn_subnet_mask="$(echo $OVPN_SUBNET_CIDR | tr "/" " " | awk '{ print $2 }')"
+OVPN_SUBNET_MASK=$(cidr2mask ${ovpn_subnet_mask})
+
 cp -f /etc/openvpn/setup/openvpn.conf /etc/openvpn/
+sed 's|OVPN_PROTO|'"${OVPN_PROTO}"'|' -i /etc/openvpn/openvpn.conf
+sed 's|OVPN_PORT|'"${OVPN_PORT}"'|' -i /etc/openvpn/openvpn.conf
+
 sed 's|OVPN_NETWORK|'"${OVPN_NETWORK}"'|' -i /etc/openvpn/openvpn.conf
 sed 's|OVPN_SUBNET_MASK|'"${OVPN_SUBNET_MASK}"'|' -i /etc/openvpn/openvpn.conf
-sed 's|CIPHER|'"${CIPHER}"'|' -i /etc/openvpn/openvpn.conf
+sed 's|CIPHER|'"${OVPN_CIPHER}"'|' -i /etc/openvpn/openvpn.conf
 
-sed 's|OVPN_K8S_POD_NETWORK|'"${OVPN_K8S_POD_NETWORK}"'|' -i /etc/openvpn/openvpn.conf
-sed 's|OVPN_K8S_POD_SUBNET_MASK|'"${OVPN_K8S_POD_SUBNET_MASK}"'|' -i /etc/openvpn/openvpn.conf
-sed 's|OVPN_K8S_SVC_NETWORK|'"${OVPN_K8S_SVC_NETWORK}"'|' -i /etc/openvpn/openvpn.conf
-sed 's|OVPN_K8S_SVC_SUBNET_MASK|'"${OVPN_K8S_SVC_SUBNET_MASK}"'|' -i /etc/openvpn/openvpn.conf
-
+# NETWORK is in OVPN_NETWORK, so leave it last to sed
 sed 's|NETWORK|'"${NETWORK}"'|' -i /etc/openvpn/openvpn.conf
 sed 's|NETMASK|'"${NETMASK}"'|' -i /etc/openvpn/openvpn.conf
-
-sed 's|OVPN_K8S_SEARCH|'"${FORMATTED_SEARCH}"'|' -i /etc/openvpn/openvpn.conf
-sed 's|OVPN_K8S_DNS|'"${DNS}"'|' -i /etc/openvpn/openvpn.conf
 
 openvpn --config /etc/openvpn/openvpn.conf
