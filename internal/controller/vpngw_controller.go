@@ -75,7 +75,7 @@ type VpnGwReconciler struct {
 func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string) error {
 	if gw.Spec.Subnet == "" {
 		err := fmt.Errorf("vpn gw subnet is required")
-		r.Log.Error(err, "name", namespacedName)
+		r.Log.Error(err, "should set subnet")
 		return err
 	}
 	if gw.Spec.Ip == "" {
@@ -83,38 +83,38 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 	}
 	if gw.Spec.Replicas < 0 || gw.Spec.Replicas > 2 {
 		err := fmt.Errorf("vpn gw replicas should be 1 or 2")
-		r.Log.Error(err, "name", namespacedName)
+		r.Log.Error(err, "should set reasonable replicas")
 		return err
 	}
 	if gw.Spec.EnableSslVpn {
 		if gw.Spec.OvpnCipher == "" {
 			err := fmt.Errorf("ssl vpn cipher is required")
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "should set cipher")
 			return err
 		}
 		if gw.Spec.OvpnProto == "" {
 			err := fmt.Errorf("ssl vpn proto is required")
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "should set ssl vpn proto")
 			return err
 		}
 		if gw.Spec.OvpnPort == 0 {
 			err := fmt.Errorf("ssl vpn port is required")
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "should set vpn port, udp 1149, tcp 443")
 			return err
 		}
 		if gw.Spec.OvpnSubnetCidr == "" {
 			err := fmt.Errorf("ssl vpn subnet cidr is required")
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "should set ssl vpn client and server subnet")
 			return err
 		}
 		if gw.Spec.OvpnProto != "udp" && gw.Spec.OvpnProto != "tcp" {
 			err := fmt.Errorf("ssl vpn proto should be udp or tcp")
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "should set reasonable vpn proto")
 			return err
 		}
 		if gw.Spec.SslVpnImage == "" {
 			err := fmt.Errorf("ssl vpn image is required")
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "should set ssl vpn image")
 			return err
 		}
 	}
@@ -192,15 +192,6 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 		newPodAnnotations[key] = value
 	}
 
-	selectors := make(map[string]string)
-	for _, v := range gw.Spec.Selector {
-		parts := strings.Split(strings.TrimSpace(v), ":")
-		if len(parts) != 2 {
-			continue
-		}
-		selectors[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-	}
-
 	containers := []corev1.Container{}
 	if gw.Spec.EnableSslVpn {
 		sslContainer := corev1.Container{
@@ -271,16 +262,37 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					Annotations: newPodAnnotations,
 				},
 				Spec: corev1.PodSpec{
-					Containers:   containers,
-					NodeSelector: selectors,
-					Tolerations:  gw.Spec.Tolerations,
-					Affinity:     &gw.Spec.Affinity,
+					Containers:  containers,
+					Tolerations: gw.Spec.Tolerations,
+					Affinity:    &gw.Spec.Affinity,
 				},
 			},
 			UpdateStrategy: appsv1.StatefulSetUpdateStrategy{
 				Type: appsv1.RollingUpdateStatefulSetStrategyType,
 			},
 		},
+	}
+
+	if len(gw.Spec.Selector) > 0 {
+		selectors := make(map[string]string)
+		for _, v := range gw.Spec.Selector {
+			parts := strings.Split(strings.TrimSpace(v), ":")
+			if len(parts) != 2 {
+				continue
+			}
+			selectors[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+		}
+		newSts.Spec.Template.Spec.NodeSelector = selectors
+	}
+
+	if len(gw.Spec.Tolerations) > 0 {
+		newSts.Spec.Template.Spec.Tolerations = gw.Spec.Tolerations
+	}
+
+	if gw.Spec.Affinity.NodeAffinity != nil ||
+		gw.Spec.Affinity.PodAffinity != nil ||
+		gw.Spec.Affinity.PodAntiAffinity != nil {
+		newSts.Spec.Template.Spec.Affinity = &gw.Spec.Affinity
 	}
 
 	// set gw instance as the owner and controller
@@ -299,8 +311,8 @@ func labelsForVpnGw(gw *vpngwv1.VpnGw) map[string]string {
 func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Request) SyncState {
 	// create vpn gw statefulset
 	namespacedName := req.NamespacedName.String()
-	r.Log.Info("start handleAddOrUpdateVpnGw", namespacedName)
-	defer r.Log.Info("end handleAddOrUpdateVpnGw", namespacedName)
+	r.Log.Info("start handleAddOrUpdateVpnGw", "vpn gw", namespacedName)
+	defer r.Log.Info("end handleAddOrUpdateVpnGw", "vpn gw", namespacedName)
 
 	// create or update statefulset
 	var needToCreate, needToUpdate bool
@@ -310,7 +322,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 		if apierrors.IsNotFound(err) {
 			needToCreate = true
 		} else {
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "failed to get old statefulset")
 			return SyncStateError
 		}
 	}
@@ -318,12 +330,12 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 		newSts := r.statefulSetForVpnGw(gw, nil)
 		err = r.Create(context.Background(), newSts)
 		if err != nil {
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "failed to create the new statefulset")
 			return SyncStateError
 		}
 		err = r.Status().Update(context.Background(), gw)
 		if err != nil {
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "failed to update vpn gw after creating exist statefulset")
 			return SyncStateError
 		}
 		return SyncStateSuccess
@@ -336,12 +348,12 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 		newSts := r.statefulSetForVpnGw(gw, oldSts.DeepCopy())
 		err = r.Update(context.Background(), newSts)
 		if err != nil {
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "failed to update the statefulset")
 			return SyncStateError
 		}
 		err = r.Status().Update(context.Background(), gw)
 		if err != nil {
-			r.Log.Error(err, "name", namespacedName)
+			r.Log.Error(err, "failed to update vpn gw after updating exist statefulset")
 			return SyncStateError
 		}
 		return SyncStateSuccess
@@ -362,8 +374,8 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// delete vpn gw itself, its owned statefulset will be deleted automatically
 	namespacedName := req.NamespacedName.String()
-	r.Log.Info("start reconcile", namespacedName)
-	defer r.Log.Info("end reconcile", namespacedName)
+	r.Log.Info("start reconcile", "vpn gw", namespacedName)
+	defer r.Log.Info("end reconcile", "vpn gw", namespacedName)
 	updates.Inc()
 
 	// fetch vpn gw
@@ -377,7 +389,7 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 	// validate vpn gw
 	if err := r.validateVpnGw(gw, namespacedName); err != nil {
-		r.Log.Error(err, "name", namespacedName)
+		r.Log.Error(err, "failed to validate vpn gw")
 		return ctrl.Result{}, err
 	}
 	// fetch vpn gw statefulset, if not exist, create it
