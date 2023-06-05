@@ -406,13 +406,12 @@ func (r *VpnGwReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			builder.WithPredicates(
 				predicate.NewPredicateFuncs(
 					func(object client.Object) bool {
-						vpnGw, ok := object.(*vpngwv1.VpnGw)
+						_, ok := object.(*vpngwv1.VpnGw)
 						if !ok {
 							err := errors.New("invalid vpn gw")
 							r.Log.Error(err, "expected vpn gw in worequeue but got something else")
 							return false
 						}
-						r.Log.Info("controller", "SetupWithManager", "vpnGw", dumpResource(vpnGw))
 						return true
 					},
 				),
