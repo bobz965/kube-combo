@@ -964,7 +964,6 @@ spec:
                   type: object
                 type: array
             required:
-            - affinity
             - enableIpsecVpn
             - enableSslVpn
             - ip
@@ -974,10 +973,8 @@ spec:
             - ovpnProto
             - ovpnSubnetCidr
             - replicas
-            - selector
             - sslVpnImage
             - subnet
-            - tolerations
             type: object
           status:
             description: VpnGwStatus defines the observed state of VpnGw

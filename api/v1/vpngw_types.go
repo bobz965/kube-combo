@@ -38,11 +38,11 @@ type VpnGwSpec struct {
 	Subnet   string `json:"subnet"`
 	Replicas int32  `json:"replicas"`
 	// vpn gw pod node selector
-	Selector []string `json:"selector"`
+	Selector []string `json:"selector,omitempty"`
 	// vpn gw pod tolerations
-	Tolerations []corev1.Toleration `json:"tolerations"`
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 	// vpn gw pod affinity
-	Affinity corev1.Affinity `json:"affinity"`
+	Affinity corev1.Affinity `json:"affinity,omitempty"`
 
 	// vpn gw enable ssl vpn
 	EnableSslVpn bool `json:"enableSslVpn"`
