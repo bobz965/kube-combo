@@ -1943,7 +1943,6 @@ spec:
                   type: object
                 type: array
             required:
-            - affinity
             - enableIpsecVpn
             - enableSslVpn
             - ip
@@ -1953,10 +1952,8 @@ spec:
             - ovpnProto
             - ovpnSubnetCidr
             - replicas
-            - selector
             - sslVpnImage
             - subnet
-            - tolerations
             type: object
         type: object
     served: true

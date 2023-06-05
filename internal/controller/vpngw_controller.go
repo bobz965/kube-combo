@@ -56,10 +56,11 @@ const (
 	// TODO:// HA use ip pool
 	KubeovnLogicalSwitchAnnotation = "ovn.kubernetes.io/logical_switch"
 
-	OvpnProtoKey      = "ovpn_proto"
-	OvpnPortKey       = "ovpn_port"
-	OvpnCipherKey     = "ovpn_cipher"
-	OvpnSubnetCidrKey = "ovpn_subnet_cidr"
+	// vpn gw pod env
+	OvpnProtoKey      = "OVPN_PROTO"
+	OvpnPortKey       = "OVPN_PORT"
+	OvpnCipherKey     = "OVPN_CIPHER"
+	OvpnSubnetCidrKey = "OVPN_SUBNET_CIDR"
 )
 
 // VpnGwReconciler reconciles a VpnGw object
@@ -175,6 +176,9 @@ func (r *VpnGwReconciler) isChanged(gw *vpngwv1.VpnGw) bool {
 }
 
 func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.StatefulSet) (newSts *appsv1.StatefulSet) {
+	namespacedName := fmt.Sprintf("%s/%s", gw.Namespace, gw.Name)
+	r.Log.Info("start statefulSetForVpnGw", "vpn gw", namespacedName)
+	defer r.Log.Info("end statefulSetForVpnGw", "vpn gw", namespacedName)
 	replicas := gw.Spec.Replicas
 	// TODO: HA may use router lb external eip as fontend
 	allowPrivilegeEscalation := true
@@ -202,7 +206,7 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 			Ports: []corev1.ContainerPort{{
 				ContainerPort: int32(gw.Spec.OvpnPort),
 				Name:          SslVpnServer,
-				Protocol:      corev1.Protocol(gw.Spec.OvpnProto),
+				Protocol:      corev1.Protocol(strings.ToUpper(gw.Spec.OvpnProto)),
 			}},
 			Env: []corev1.EnvVar{
 				{
@@ -262,9 +266,7 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					Annotations: newPodAnnotations,
 				},
 				Spec: corev1.PodSpec{
-					Containers:  containers,
-					Tolerations: gw.Spec.Tolerations,
-					Affinity:    &gw.Spec.Affinity,
+					Containers: containers,
 				},
 			},
 			UpdateStrategy: appsv1.StatefulSetUpdateStrategy{
@@ -274,6 +276,7 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	}
 
 	if len(gw.Spec.Selector) > 0 {
+		r.Log.Info("init vpn gw pod selector", "vpn gw", namespacedName)
 		selectors := make(map[string]string)
 		for _, v := range gw.Spec.Selector {
 			parts := strings.Split(strings.TrimSpace(v), ":")
@@ -286,12 +289,14 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	}
 
 	if len(gw.Spec.Tolerations) > 0 {
+		r.Log.Info("init vpn gw pod tolerations", "vpn gw", namespacedName)
 		newSts.Spec.Template.Spec.Tolerations = gw.Spec.Tolerations
 	}
 
 	if gw.Spec.Affinity.NodeAffinity != nil ||
 		gw.Spec.Affinity.PodAffinity != nil ||
 		gw.Spec.Affinity.PodAntiAffinity != nil {
+		r.Log.Info("init vpn gw pod node affinity", "vpn gw", namespacedName)
 		newSts.Spec.Template.Spec.Affinity = &gw.Spec.Affinity
 	}
 
@@ -335,7 +340,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 		}
 		err = r.Status().Update(context.Background(), gw)
 		if err != nil {
-			r.Log.Error(err, "failed to update vpn gw after creating exist statefulset")
+			r.Log.Error(err, "failed to update vpn gw after creating new statefulset")
 			return SyncStateError
 		}
 		return SyncStateSuccess

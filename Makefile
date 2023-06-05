@@ -136,7 +136,7 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: docker-build-ssl-vpn
 docker-build-ssl-vpn: 
-	docker build --network=host -t ${SSL_VPN_IMG} .
+	docker build --network=host -f Dockerfile.openvpn -t ${SSL_VPN_IMG} .
 
 .PHONY: docker-push-ssl-vpn
 docker-push-ssl-vpn: 

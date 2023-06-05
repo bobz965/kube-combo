@@ -73,9 +73,9 @@ type VpnGwStatus struct {
 	Ip             string              `json:"ip" patchStrategy:"merge"`
 	Subnet         string              `json:"subnet" patchStrategy:"merge"`
 	Replicas       int32               `json:"replicas" patchStrategy:"merge"`
-	Selector       []string            `json:"selector" patchStrategy:"merge"`
-	Tolerations    []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`
-	Affinity       corev1.Affinity     `json:"affinity" patchStrategy:"merge"`
+	Selector       []string            `json:"selector,omitempty" patchStrategy:"merge"`
+	Tolerations    []corev1.Toleration `json:"tolerations,omitempty" patchStrategy:"merge"`
+	Affinity       corev1.Affinity     `json:"affinity,omitempty" patchStrategy:"merge"`
 	EnableSslVpn   bool                `json:"enableSslVpn" patchStrategy:"merge"`
 	SslVpnImage    string              `json:"sslVpnImage" patchStrategy:"merge"`
 	OvpnCipher     string              `json:"ovpnCipher" patchStrategy:"merge"`
