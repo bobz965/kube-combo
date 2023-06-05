@@ -55,18 +55,20 @@ make manifests
 Docker
 
 ``` bash
-make docker-build 
+make docker-build docker-push 
 
-make docker-push
+# make docker-build 
+# make docker-push
 ```
 
 OLM
 
 ``` bash
-# make bundle bundle-build bundle-push
-make bundle
-make bundle-build
-make bundle-push
+make bundle bundle-build bundle-push
+
+# make bundle
+# make bundle-build
+# make bundle-push
 
 
 ## 目前不支持直接测试，必须要先把bundle 传到 registry，有issue记录: https://github.com/operator-framework/operator-sdk/issues/6432

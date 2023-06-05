@@ -1,7 +1,4 @@
 mode: set
-github.com/bobz965/kube-ovn-operator/internal/controller/dump.go:9.41,11.16 2 0
-github.com/bobz965/kube-ovn-operator/internal/controller/dump.go:11.16,13.3 1 0
-github.com/bobz965/kube-ovn-operator/internal/controller/dump.go:14.2,14.23 1 0
 github.com/bobz965/kube-ovn-operator/internal/controller/stats.go:35.13,40.2 4 1
 github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:75.89,76.26 1 0
 github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:76.26,80.3 3 0
@@ -94,9 +91,9 @@ github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:399
 github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:403.68,408.38 1 0
 github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:408.38,410.14 2 0
 github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:410.14,414.8 3 0
-github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:415.7,416.18 2 0
-github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:425.108,428.31 3 0
-github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:428.31,430.3 1 0
-github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:431.2,431.16 1 0
-github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:431.16,433.3 1 0
-github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:434.2,434.18 1 0
+github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:415.7,415.18 1 0
+github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:424.108,427.31 3 0
+github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:427.31,429.3 1 0
+github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:430.2,430.16 1 0
+github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:430.16,432.3 1 0
+github.com/bobz965/kube-ovn-operator/internal/controller/vpngw_controller.go:433.2,433.18 1 0
