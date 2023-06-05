@@ -51,9 +51,6 @@ spec:
           spec:
             description: VpnGwSpec defines the desired state of VpnGw
             properties:
-              EnableIpsecVpn:
-                description: vpn gw enable ipsec vpn
-                type: boolean
               affinity:
                 description: vpn gw pod affinity
                 properties:
@@ -882,6 +879,9 @@ spec:
                         type: array
                     type: object
                 type: object
+              enableIpsecVpn:
+                description: vpn gw enable ipsec vpn
+                type: boolean
               enableSslVpn:
                 description: vpn gw enable ssl vpn
                 type: boolean
@@ -964,8 +964,8 @@ spec:
                   type: object
                 type: array
             required:
-            - EnableIpsecVpn
             - affinity
+            - enableIpsecVpn
             - enableSslVpn
             - ip
             - ipsecVpnImage

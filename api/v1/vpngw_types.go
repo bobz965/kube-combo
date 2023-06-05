@@ -29,13 +29,13 @@ type VpnGwSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// vpn gw static ip
+	Ip string `json:"ip"`
 	// pod subnet
 	// the vpn gw server pod running inside in this pod
 	// user can access all pod in this subnet via vpn gw
 	// if use subnet lb vip in this subnet, so no need svc cidr in this case
-	Subnet string `json:"subnet"`
-	// vpn gw static ip
-	Ip       string `json:"ip"`
+	Subnet   string `json:"subnet"`
 	Replicas int32  `json:"replicas"`
 	// vpn gw pod node selector
 	Selector []string `json:"selector"`
@@ -62,7 +62,7 @@ type VpnGwSpec struct {
 	SslVpnImage string `json:"sslVpnImage"`
 
 	// vpn gw enable ipsec vpn
-	EnableIpsecVpn bool `json:"EnableIpsecVpn"`
+	EnableIpsecVpn bool `json:"enableIpsecVpn"`
 	// ipsec use strongswan server
 	// all ipsec vpn spec start with ipsec
 	IpsecVpnImage string `json:"ipsecVpnImage"`
@@ -70,8 +70,8 @@ type VpnGwSpec struct {
 
 // VpnGwStatus defines the observed state of VpnGw
 type VpnGwStatus struct {
-	Subnet         string              `json:"subnet" patchStrategy:"merge"`
 	Ip             string              `json:"ip" patchStrategy:"merge"`
+	Subnet         string              `json:"subnet" patchStrategy:"merge"`
 	Replicas       int32               `json:"replicas" patchStrategy:"merge"`
 	Selector       []string            `json:"selector" patchStrategy:"merge"`
 	Tolerations    []corev1.Toleration `json:"tolerations" patchStrategy:"merge"`

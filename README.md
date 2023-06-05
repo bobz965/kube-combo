@@ -72,7 +72,16 @@ make bundle-push
 ## 目前不支持直接测试，必须要先把bundle 传到 registry，有issue记录: https://github.com/operator-framework/operator-sdk/issues/6432
 
 
-# 在 k8s 中运行
+```
+
+
+### 3.2 基于 olm 部署
+
+[operator-sdk 二进制安装方式](https://sdk.operatorframework.io/docs/installation/)
+
+```bash
+# 在 k8s集群安装该项目
+operator-sdk olm install
 
 ## ref https://github.com/operator-framework/operator-lifecycle-manager/releases/tag/v0.24.0
 
@@ -104,11 +113,3 @@ operator-sdk cleanup vpn-gw
 
 
 
-### 3.2 基于 olm 部署
-
-[operator-sdk 二进制安装方式](https://sdk.operatorframework.io/docs/installation/)
-
-```bash
-# 在 k8s集群安装该项目
-operator-sdk olm install
-```

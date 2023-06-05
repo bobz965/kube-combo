@@ -91,6 +91,7 @@ flycheck_*.el
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
+cover.out
 *.out
 
 ### Vim ###

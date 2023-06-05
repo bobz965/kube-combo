@@ -56,9 +56,10 @@ const (
 	// TODO:// HA use ip pool
 	KubeovnLogicalSwitchAnnotation = "ovn.kubernetes.io/logical_switch"
 
-	OvpnProtoKey  = "ovpn_proto"
-	OvpnPortKey   = "ovpn_port"
-	OvpnCipherKey = "ovpn_cipher"
+	OvpnProtoKey      = "ovpn_proto"
+	OvpnPortKey       = "ovpn_port"
+	OvpnCipherKey     = "ovpn_cipher"
+	OvpnSubnetCidrKey = "ovpn_subnet_cidr"
 )
 
 // VpnGwReconciler reconciles a VpnGw object
@@ -224,6 +225,10 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				{
 					Name:  OvpnCipherKey,
 					Value: gw.Spec.OvpnCipher,
+				},
+				{
+					Name:  OvpnSubnetCidrKey,
+					Value: gw.Spec.OvpnSubnetCidr,
 				},
 			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
