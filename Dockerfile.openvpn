@@ -1,7 +1,7 @@
 # Smallest base image
 #https://hub.docker.com/_/alpine/tags
 
-FROM alpine:latest
+FROM alpine:3.17.3
 
 # Install needed packages
 

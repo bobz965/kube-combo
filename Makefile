@@ -35,6 +35,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # IMAGE_TAG_BASE ?= kube-ovn-operator.com/vpn-gw
 IMAGE_TAG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/kube-ovn-operator
 SSL_VPN_IMG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/openvpn
+IPSEC_VPN_IMG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/strongswan
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -141,6 +142,14 @@ docker-build-ssl-vpn:
 .PHONY: docker-push-ssl-vpn
 docker-push-ssl-vpn: 
 	docker push ${SSL_VPN_IMG}
+
+.PHONY: docker-build-ipsec-vpn
+docker-build-ipsec-vpn: 
+	docker build --network=host -f Dockerfile.strongSwan -t ${IPSEC_VPN_IMG} .
+
+.PHONY: docker-push-ipsec-vpn
+docker-push-ipsec-vpn: 
+	docker push ${IPSEC_VPN_IMG}
 
 # PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:

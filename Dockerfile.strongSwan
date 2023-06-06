@@ -1,0 +1,15 @@
+# Smallest base image
+# https://hub.docker.com/_/alpine/tags
+
+# ref
+# https://wiki.alpinelinux.org/wiki/Setup_of_DMVPN_on_Alpine_linux
+
+FROM alpine:3.17.3
+
+# Install needed packages
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+
+RUN apk update && \
+    apk add strongswan iptables quagga-nhrp bash && \
+    rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
+

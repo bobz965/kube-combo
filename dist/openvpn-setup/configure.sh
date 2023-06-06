@@ -64,4 +64,7 @@ sed 's|CIPHER|'"${OVPN_CIPHER}"'|' -i /etc/openvpn/openvpn.conf
 sed 's|NETWORK|'"${NETWORK}"'|' -i /etc/openvpn/openvpn.conf
 sed 's|NETMASK|'"${NETMASK}"'|' -i /etc/openvpn/openvpn.conf
 
+# DNS
+sed 's|OVPN_K8S_SEARCH|'"${FORMATTED_SEARCH}"'|' -i /etc/openvpn/openvpn.conf
+
 openvpn --config /etc/openvpn/openvpn.conf
