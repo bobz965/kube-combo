@@ -26,6 +26,7 @@ import (
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -56,11 +57,17 @@ const (
 	// TODO:// HA use ip pool
 	KubeovnLogicalSwitchAnnotation = "ovn.kubernetes.io/logical_switch"
 
+	KubeovnIngressRateAnnotation = "ovn.kubernetes.io/ingress_rate"
+	KubeovnEgressRateAnnotation  = "ovn.kubernetes.io/egress_rate"
+
 	// vpn gw pod env
 	OvpnProtoKey      = "OVPN_PROTO"
 	OvpnPortKey       = "OVPN_PORT"
 	OvpnCipherKey     = "OVPN_CIPHER"
 	OvpnSubnetCidrKey = "OVPN_SUBNET_CIDR"
+
+	IpsecRemoteAddrsKey = "IPSEC_REMOTE_ADDRS"
+	IpsecRemoteTsKey    = "IPSEC_REMOTE_TS"
 )
 
 // VpnGwReconciler reconciles a VpnGw object
@@ -82,11 +89,13 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 	if gw.Spec.Ip == "" {
 		r.Log.Info("vpn gw ip should random allocate", "name", namespacedName)
 	}
-	if gw.Spec.Replicas < 0 || gw.Spec.Replicas > 2 {
-		err := fmt.Errorf("vpn gw replicas should be 1 or 2")
+
+	if gw.Spec.Replicas != 1 {
+		err := fmt.Errorf("vpn gw replicas should only be 1 for now, ha mode will be supported in the future")
 		r.Log.Error(err, "should set reasonable replicas")
 		return err
 	}
+
 	if gw.Spec.EnableSslVpn {
 		if gw.Spec.OvpnCipher == "" {
 			err := fmt.Errorf("ssl vpn cipher is required")
@@ -123,56 +132,82 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 }
 
 func (r *VpnGwReconciler) isChanged(gw *vpngwv1.VpnGw) bool {
+	changed := false
 	if gw.Status.Subnet == "" && gw.Spec.Subnet != "" {
 		// subnet not support change
 		gw.Status.Subnet = gw.Spec.Subnet
-		return true
+		changed = true
+	}
+
+	if gw.Status.Cpu != gw.Spec.Cpu {
+		gw.Status.Cpu = gw.Spec.Cpu
+		changed = true
+	}
+	if gw.Status.Memory != gw.Spec.Memory {
+		gw.Status.Memory = gw.Spec.Memory
+		changed = true
+	}
+	if gw.Status.QoSBandwidth != gw.Spec.QoSBandwidth {
+		gw.Status.QoSBandwidth = gw.Spec.QoSBandwidth
+		changed = true
 	}
 	if gw.Status.Ip != gw.Spec.Ip {
 		gw.Status.Ip = gw.Spec.Ip
-		return true
+		changed = true
 	}
 	if gw.Status.Replicas != gw.Spec.Replicas {
 		gw.Status.Replicas = gw.Spec.Replicas
-		return true
+		changed = true
 	}
+
 	if gw.Status.EnableSslVpn != gw.Spec.EnableSslVpn {
 		gw.Status.EnableSslVpn = gw.Spec.EnableSslVpn
-		return true
+		if gw.Status.OvpnCipher != gw.Spec.OvpnCipher {
+			gw.Status.OvpnCipher = gw.Spec.OvpnCipher
+		}
+		if gw.Status.OvpnProto != gw.Spec.OvpnProto {
+			gw.Status.OvpnProto = gw.Spec.OvpnProto
+		}
+		if gw.Status.OvpnPort != gw.Spec.OvpnPort {
+			gw.Status.OvpnPort = gw.Spec.OvpnPort
+		}
+		if gw.Status.OvpnSubnetCidr != gw.Spec.OvpnSubnetCidr {
+			gw.Status.OvpnSubnetCidr = gw.Spec.OvpnSubnetCidr
+		}
+		if gw.Status.SslVpnImage != gw.Spec.SslVpnImage {
+			gw.Status.SslVpnImage = gw.Spec.SslVpnImage
+		}
+		changed = true
 	}
+
 	if gw.Status.EnableIpsecVpn != gw.Spec.EnableIpsecVpn {
 		gw.Status.EnableIpsecVpn = gw.Spec.EnableIpsecVpn
-		return true
+		if gw.Status.IpsecRemoteAddrs != gw.Spec.IpsecRemoteAddrs {
+			gw.Status.IpsecRemoteAddrs = gw.Spec.IpsecRemoteAddrs
+		}
+		if gw.Status.IpsecRemoteAddrs != gw.Spec.IpsecRemoteAddrs {
+			gw.Status.IpsecRemoteAddrs = gw.Spec.IpsecRemoteAddrs
+		}
+		if gw.Status.IpsecVpnImage != gw.Spec.IpsecVpnImage {
+			gw.Status.IpsecVpnImage = gw.Spec.IpsecVpnImage
+
+		}
+		changed = true
 	}
-	if gw.Status.OvpnCipher != gw.Spec.OvpnCipher {
-		gw.Status.OvpnCipher = gw.Spec.OvpnCipher
-		return true
-	}
-	if gw.Status.OvpnProto != gw.Spec.OvpnProto {
-		gw.Status.OvpnProto = gw.Spec.OvpnProto
-		return true
-	}
-	if gw.Status.OvpnPort != gw.Spec.OvpnPort {
-		gw.Status.OvpnPort = gw.Spec.OvpnPort
-		return true
-	}
-	if gw.Status.OvpnSubnetCidr != gw.Spec.OvpnSubnetCidr {
-		gw.Status.OvpnSubnetCidr = gw.Spec.OvpnSubnetCidr
-		return true
-	}
+
 	if !reflect.DeepEqual(gw.Spec.Selector, gw.Status.Selector) {
 		gw.Status.Selector = gw.Spec.Selector
-		return true
+		changed = true
 	}
 	if !reflect.DeepEqual(gw.Spec.Tolerations, gw.Status.Tolerations) {
 		gw.Status.Tolerations = gw.Spec.Tolerations
-		return true
+		changed = true
 	}
 	if !reflect.DeepEqual(gw.Spec.Affinity, gw.Status.Affinity) {
 		gw.Status.Affinity = gw.Spec.Affinity
-		return true
+		changed = true
 	}
-	return false
+	return changed
 }
 
 func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.StatefulSet) (newSts *appsv1.StatefulSet) {
@@ -191,6 +226,8 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	podAnnotations := map[string]string{
 		KubeovnLogicalSwitchAnnotation: gw.Spec.Subnet,
 		KubeovnIpAddressAnnotation:     gw.Spec.Ip,
+		KubeovnIngressRateAnnotation:   gw.Spec.QoSBandwidth,
+		KubeovnEgressRateAnnotation:    gw.Spec.QoSBandwidth,
 	}
 	for key, value := range podAnnotations {
 		newPodAnnotations[key] = value
@@ -199,8 +236,18 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	containers := []corev1.Container{}
 	if gw.Spec.EnableSslVpn {
 		sslContainer := corev1.Container{
-			Name:    SslVpnServer,
-			Image:   gw.Spec.SslVpnImage,
+			Name:  SslVpnServer,
+			Image: gw.Spec.SslVpnImage,
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
+					corev1.ResourceMemory: resource.MustParse(gw.Spec.Memory),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
+					corev1.ResourceMemory: resource.MustParse(gw.Spec.Memory),
+				},
+			},
 			Command: []string{SslVpnStartUpCMD},
 			Ports: []corev1.ContainerPort{{
 				ContainerPort: int32(gw.Spec.OvpnPort),
@@ -223,6 +270,14 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				{
 					Name:  OvpnSubnetCidrKey,
 					Value: gw.Spec.OvpnSubnetCidr,
+				},
+				{
+					Name:  IpsecRemoteAddrsKey,
+					Value: gw.Spec.IpsecRemoteAddrs,
+				},
+				{
+					Name:  IpsecRemoteTsKey,
+					Value: gw.Spec.IpsecRemoteTs,
 				},
 			},
 			ImagePullPolicy: corev1.PullIfNotPresent,

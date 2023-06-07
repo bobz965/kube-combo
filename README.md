@@ -46,6 +46,8 @@ make manifests
 
 ### 2.2 ipsec vpn 设计
 
+该功能基于 openvpn 实现，[用于 Site-to-Site 场景](https://github.com/strongswan/strongswan#site-to-site-case) ，使用 IKEv2， 不再使用 IKEv1
+
 ## 3. 维护
 
 基于 olm 来维护， olm 也叫 operator 生命周期管理器， 可以对接到应用商店 kubeapp 。
@@ -80,7 +82,6 @@ make bundle bundle-build bundle-push
 
 ```
 
-
 ### 3.2 基于 olm 部署
 
 [operator-sdk 二进制安装方式](https://sdk.operatorframework.io/docs/installation/)
@@ -114,8 +115,3 @@ k get operator
 operator-sdk cleanup vpn-gw
 
 ```
-
-
-
-
-

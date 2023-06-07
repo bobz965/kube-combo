@@ -29,6 +29,15 @@ type VpnGwSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// pod request limit cpu, memory
+	// 1 cpu at least
+	// 1G memory at least
+	Cpu    string `json:"cpu"`
+	Memory string `json:"memory"`
+
+	// 1Mbps bandwidth at least
+	QoSBandwidth string `json:"qosBandwidth"`
+
 	// vpn gw static ip
 	Ip string `json:"ip"`
 	// pod subnet
@@ -65,25 +74,38 @@ type VpnGwSpec struct {
 	EnableIpsecVpn bool `json:"enableIpsecVpn"`
 	// ipsec use strongswan server
 	// all ipsec vpn spec start with ipsec
+
+	// remote ipsec vpn server ips
+	IpsecRemoteAddrs string `json:"ipsecRemoteAddrs"`
+
+	// remote ipsec vpn server subnet cidrs
+	IpsecRemoteTs string `json:"ipsecRemoteTs"`
+
+	// ipsec vpn server image, strongswan server
 	IpsecVpnImage string `json:"ipsecVpnImage"`
 }
 
 // VpnGwStatus defines the observed state of VpnGw
 type VpnGwStatus struct {
-	Ip             string              `json:"ip" patchStrategy:"merge"`
-	Subnet         string              `json:"subnet" patchStrategy:"merge"`
-	Replicas       int32               `json:"replicas" patchStrategy:"merge"`
-	Selector       []string            `json:"selector,omitempty" patchStrategy:"merge"`
-	Tolerations    []corev1.Toleration `json:"tolerations,omitempty" patchStrategy:"merge"`
-	Affinity       corev1.Affinity     `json:"affinity,omitempty" patchStrategy:"merge"`
-	EnableSslVpn   bool                `json:"enableSslVpn" patchStrategy:"merge"`
-	SslVpnImage    string              `json:"sslVpnImage" patchStrategy:"merge"`
-	OvpnCipher     string              `json:"ovpnCipher" patchStrategy:"merge"`
-	OvpnProto      string              `json:"ovpnProto" patchStrategy:"merge"`
-	OvpnPort       int                 `json:"ovpnPort" patchStrategy:"merge"`
-	OvpnSubnetCidr string              `json:"ovpnSubnetCidr" patchStrategy:"merge"`
-	EnableIpsecVpn bool                `json:"enableIpsecVpn" patchStrategy:"merge"`
-	IpsecVpnImage  string              `json:"ipsecVpnImage" patchStrategy:"merge"`
+	Cpu              string              `json:"cpu" patchStrategy:"merge"`
+	Memory           string              `json:"memory" patchStrategy:"merge"`
+	QoSBandwidth     string              `json:"qosBandwidth" patchStrategy:"merge"`
+	Ip               string              `json:"ip" patchStrategy:"merge"`
+	Subnet           string              `json:"subnet" patchStrategy:"merge"`
+	Replicas         int32               `json:"replicas" patchStrategy:"merge"`
+	Selector         []string            `json:"selector,omitempty" patchStrategy:"merge"`
+	Tolerations      []corev1.Toleration `json:"tolerations,omitempty" patchStrategy:"merge"`
+	Affinity         corev1.Affinity     `json:"affinity,omitempty" patchStrategy:"merge"`
+	EnableSslVpn     bool                `json:"enableSslVpn" patchStrategy:"merge"`
+	SslVpnImage      string              `json:"sslVpnImage" patchStrategy:"merge"`
+	OvpnCipher       string              `json:"ovpnCipher" patchStrategy:"merge"`
+	OvpnProto        string              `json:"ovpnProto" patchStrategy:"merge"`
+	OvpnPort         int                 `json:"ovpnPort" patchStrategy:"merge"`
+	OvpnSubnetCidr   string              `json:"ovpnSubnetCidr" patchStrategy:"merge"`
+	EnableIpsecVpn   bool                `json:"enableIpsecVpn" patchStrategy:"merge"`
+	IpsecVpnImage    string              `json:"ipsecVpnImage" patchStrategy:"merge"`
+	IpsecRemoteAddrs string              `json:"ipsecRemoteAddrs" patchStrategy:"merge"`
+	IpsecRemoteTs    string              `json:"ipsecRemoteTs" patchStrategy:"merge"`
 
 	// Conditions store the status conditions of the vpn gw instances
 	// +operator-sdk:csv:customresourcedefinitions:type=status
