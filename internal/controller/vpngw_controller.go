@@ -44,8 +44,8 @@ import (
 )
 
 const (
-	SslVpnServer   = "ssl-vpn-server"
-	IpsecVpnServer = "ipsec-vpn-server"
+	SslVpnServer   = "ssl"
+	IpsecVpnServer = "ipsec"
 
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
