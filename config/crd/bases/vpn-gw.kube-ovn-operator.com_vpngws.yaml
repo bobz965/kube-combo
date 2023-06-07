@@ -879,6 +879,10 @@ spec:
                         type: array
                     type: object
                 type: object
+              cpu:
+                description: pod request limit cpu, memory 1 cpu at least 1G memory
+                  at least
+                type: string
               enableIpsecVpn:
                 description: vpn gw enable ipsec vpn
                 type: boolean
@@ -888,9 +892,16 @@ spec:
               ip:
                 description: vpn gw static ip
                 type: string
+              ipsecRemoteAddrs:
+                description: remote ipsec vpn server ips
+                type: string
+              ipsecRemoteTs:
+                description: remote ipsec vpn server subnet cidrs
+                type: string
               ipsecVpnImage:
-                description: ipsec use strongswan server all ipsec vpn spec start
-                  with ipsec
+                description: ipsec vpn server image, strongswan server
+                type: string
+              memory:
                 type: string
               ovpnCipher:
                 description: ssl vpn use openvpn server all ssl vpn spec start with
@@ -903,6 +914,9 @@ spec:
                 type: string
               ovpnSubnetCidr:
                 description: ovpn ssl vpn clinet server subnet cidr 10.240.0.0/16
+                type: string
+              qosBandwidth:
+                description: 1Mbps bandwidth at least
                 type: string
               replicas:
                 format: int32
@@ -963,14 +977,19 @@ spec:
                   type: object
                 type: array
             required:
+            - cpu
             - enableIpsecVpn
             - enableSslVpn
             - ip
+            - ipsecRemoteAddrs
+            - ipsecRemoteTs
             - ipsecVpnImage
+            - memory
             - ovpnCipher
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
+            - qosBandwidth
             - replicas
             - sslVpnImage
             - subnet
@@ -1876,13 +1895,21 @@ spec:
                   - type
                   type: object
                 type: array
+              cpu:
+                type: string
               enableIpsecVpn:
                 type: boolean
               enableSslVpn:
                 type: boolean
               ip:
                 type: string
+              ipsecRemoteAddrs:
+                type: string
+              ipsecRemoteTs:
+                type: string
               ipsecVpnImage:
+                type: string
+              memory:
                 type: string
               ovpnCipher:
                 type: string
@@ -1891,6 +1918,8 @@ spec:
               ovpnProto:
                 type: string
               ovpnSubnetCidr:
+                type: string
+              qosBandwidth:
                 type: string
               replicas:
                 format: int32
@@ -1943,14 +1972,19 @@ spec:
                   type: object
                 type: array
             required:
+            - cpu
             - enableIpsecVpn
             - enableSslVpn
             - ip
+            - ipsecRemoteAddrs
+            - ipsecRemoteTs
             - ipsecVpnImage
+            - memory
             - ovpnCipher
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
+            - qosBandwidth
             - replicas
             - sslVpnImage
             - subnet
