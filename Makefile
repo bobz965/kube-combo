@@ -57,6 +57,8 @@ endif
 IMG ?= $(IMAGE_TAG_BASE):latest
 
 SSL_VPN_IMG ?= $(SSL_VPN_IMG_BASE):v$(VERSION)
+IPSEC_VPN_IMG ?= $(IPSEC_VPN_IMG_BASE):v$(VERSION)
+
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.26.0
 
@@ -129,7 +131,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: test ## Build docker image with the manager.
-	docker build --network=host -t ${IMG} .
+	docker buildx build --load --platform linux/amd64 -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
@@ -137,7 +139,7 @@ docker-push: ## Push docker image with the manager.
 
 .PHONY: docker-build-ssl-vpn
 docker-build-ssl-vpn: 
-	docker build --network=host -f Dockerfile.openvpn -t ${SSL_VPN_IMG} .
+	docker buildx build --load --platform linux/amd64 -f Dockerfile.openvpn -t ${SSL_VPN_IMG} .
 
 .PHONY: docker-push-ssl-vpn
 docker-push-ssl-vpn: 
@@ -145,7 +147,7 @@ docker-push-ssl-vpn:
 
 .PHONY: docker-build-ipsec-vpn
 docker-build-ipsec-vpn: 
-	docker build --network=host -f Dockerfile.strongSwan -t ${IPSEC_VPN_IMG} .
+	docker buildx build --load --platform linux/amd64 -f Dockerfile.strongSwan -t ${IPSEC_VPN_IMG} .
 
 .PHONY: docker-push-ipsec-vpn
 docker-push-ipsec-vpn: 
@@ -237,7 +239,7 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	docker buildx build --load --platform linux/amd64 -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
