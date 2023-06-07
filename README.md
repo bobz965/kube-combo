@@ -44,13 +44,13 @@ make manifests
 
 该功能基于 openvpn 实现，可以通过公网 ip，在个人 电脑，手机客户端直接访问 kube-ovn 自定义 vpc subnet 内部的 pod 以及 switch lb 对应是的 svc endpoint。
 
-### 2.2 ipsec vpn 设计
+### 2.2 ipsec vpn
 
 该功能基于 openvpn 实现，[用于 Site-to-Site 场景](https://github.com/strongswan/strongswan#site-to-site-case) ，使用 IKEv2， 不再使用 IKEv1
 
 ## 3. 维护
 
-基于 olm 来维护， olm 也叫 operator 生命周期管理器， 可以对接到应用商店 kubeapp 。
+基于 operator 生命周期管理器（olm）来维护， 可以对接到应用商店 kubeapp。
 
 ### 3.1 项目打包
 

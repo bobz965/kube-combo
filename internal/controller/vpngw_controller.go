@@ -47,6 +47,9 @@ const (
 	SslVpnServer   = "ssl-vpn-server"
 	IpsecVpnServer = "ipsec-vpn-server"
 
+	IpsecVpnLocalPortKey  = "ipsec-vpn-local"
+	IpsecVpnRemotePortKey = "ipsec-vpn-remote"
+
 	SslVpnStartUpCMD   = "/etc/openvpn/setup/configure.sh"
 	IpsecVpnStartUpCMD = "/etc/ipsec/setup/configure.sh"
 
@@ -59,6 +62,10 @@ const (
 
 	KubeovnIngressRateAnnotation = "ovn.kubernetes.io/ingress_rate"
 	KubeovnEgressRateAnnotation  = "ovn.kubernetes.io/egress_rate"
+
+	IpSecLocalPort  = 500
+	IpSecRemotePort = 4500
+	IpsecProto      = "UDP"
 
 	// vpn gw pod env
 	OvpnProtoKey      = "OVPN_PROTO"
@@ -271,14 +278,6 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					Name:  OvpnSubnetCidrKey,
 					Value: gw.Spec.OvpnSubnetCidr,
 				},
-				{
-					Name:  IpsecRemoteAddrsKey,
-					Value: gw.Spec.IpsecRemoteAddrs,
-				},
-				{
-					Name:  IpsecRemoteTsKey,
-					Value: gw.Spec.IpsecRemoteTs,
-				},
 			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			SecurityContext: &corev1.SecurityContext{
@@ -290,10 +289,41 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	}
 	if gw.Spec.EnableIpsecVpn {
 		ipsecContainer := corev1.Container{
-			Name:            IpsecVpnServer,
-			Image:           gw.Spec.SslVpnImage,
-			Command:         []string{"bash"},
-			Args:            []string{"-c", "sleep infinity"},
+			Name:  IpsecVpnServer,
+			Image: gw.Spec.IpsecVpnImage,
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
+					corev1.ResourceMemory: resource.MustParse(gw.Spec.Memory),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
+					corev1.ResourceMemory: resource.MustParse(gw.Spec.Memory),
+				},
+			},
+			Command: []string{"bash"},
+			Args:    []string{"-c", "sleep infinity"},
+			Ports: []corev1.ContainerPort{
+				{
+					ContainerPort: IpSecLocalPort,
+					Name:          IpsecVpnLocalPortKey,
+					Protocol:      corev1.Protocol(IpsecProto),
+				},
+				{
+					ContainerPort: IpSecRemotePort,
+					Name:          IpsecVpnRemotePortKey,
+					Protocol:      corev1.Protocol(IpsecProto)},
+			},
+			Env: []corev1.EnvVar{
+				{
+					Name:  IpsecRemoteAddrsKey,
+					Value: gw.Spec.IpsecRemoteAddrs,
+				},
+				{
+					Name:  IpsecRemoteTsKey,
+					Value: gw.Spec.IpsecRemoteTs,
+				},
+			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			SecurityContext: &corev1.SecurityContext{
 				Privileged:               &privileged,
