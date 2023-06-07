@@ -47,8 +47,8 @@ const (
 	SslVpnServer   = "ssl-vpn-server"
 	IpsecVpnServer = "ipsec-vpn-server"
 
-	IpsecVpnLocalPortKey  = "ipsec-vpn-local"
-	IpsecVpnRemotePortKey = "ipsec-vpn-remote"
+	IpsecVpnLocalPortKey  = "ipsec-local"
+	IpsecVpnRemotePortKey = "ipsec-remote"
 
 	SslVpnStartUpCMD   = "/etc/openvpn/setup/configure.sh"
 	IpsecVpnStartUpCMD = "/etc/ipsec/setup/configure.sh"
