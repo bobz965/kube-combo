@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # generate client cert based given client key name and service ip
 # $1 should be client key name
 # $2 should be lb service external ip or floating ip

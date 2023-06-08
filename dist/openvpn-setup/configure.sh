@@ -1,4 +1,5 @@
 #!/bin/sh
+set -euo pipefail
 
 cidr2mask() {
    # Number of args to shift, 255..255, first non-255 byte, zeroes

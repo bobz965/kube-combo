@@ -50,8 +50,9 @@ const (
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
 
-	SslVpnStartUpCMD   = "/etc/openvpn/setup/configure.sh"
-	IpsecVpnStartUpCMD = "/etc/ipsec/setup/configure.sh"
+	SslVpnStartUpCMD = "/etc/openvpn/setup/configure.sh"
+	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
+	IpsecVpnStartUpCMD = "/usr/sbin/charon-systemd"
 
 	EnableSslVpnLabel   = "enable_ssl_vpn"
 	EnableIpsecVpnLabel = "enable_ipsec_vpn"
@@ -301,8 +302,8 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					corev1.ResourceMemory: resource.MustParse(gw.Spec.Memory),
 				},
 			},
-			Command: []string{"bash"},
-			Args:    []string{"-c", "sleep infinity"},
+			Command: []string{IpsecVpnStartUpCMD},
+			// Args:    []string{"-c", "sleep infinity"},
 			Ports: []corev1.ContainerPort{
 				{
 					ContainerPort: IpSecLocalPort,

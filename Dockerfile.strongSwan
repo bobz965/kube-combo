@@ -1,17 +1,10 @@
-# Smallest base image
-# https://hub.docker.com/_/alpine/tags
+FROM rockylinux:9.2
 
-# ref
-# https://wiki.alpinelinux.org/wiki/Setup_of_DMVPN_on_Alpine_linux
+RUN dnf install -y epel-release && \
+    dnf install -y strongswan strongswan-libipsec strongswan-sqlite iproute && \
+    dnf clean all
 
-FROM alpine:3.17.3
+RUN mkdir -p /ipsec.d/{cacerts,certs,private} && chmod 700 /ipsec.d
 
-# Install needed packages
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
-
-RUN apk update && \
-    apk add strongswan iptables quagga-nhrp bash && \
-    rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
-
-COPY dist/strongswan-setup /strongswan-setup
-RUN chmod +x /strongswan-setup/configure.sh
+COPY dist/strongswan-setup /
+RUN chmod +x configure.sh

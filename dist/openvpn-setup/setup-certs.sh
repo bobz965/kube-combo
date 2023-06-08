@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 export EASYRSA_BATCH=1 # for non-interactive environments
 EASY_RSA_LOC="/etc/openvpn/certs"
 SERVER_CERT="${EASY_RSA_LOC}/pki/issued/server.crt"
