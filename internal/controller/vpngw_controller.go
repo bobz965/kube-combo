@@ -403,6 +403,13 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 	r.Log.Info("start handleAddOrUpdateVpnGw", "vpn gw", namespacedName)
 	defer r.Log.Info("end handleAddOrUpdateVpnGw", "vpn gw", namespacedName)
 
+	// validate vpn gw spec
+	if err := r.validateVpnGw(gw, namespacedName); err != nil {
+		r.Log.Error(err, "failed to validate vpn gw")
+		// invalid spec no retry
+		return SyncStateErrorNoRetry
+	}
+
 	// create or update statefulset
 	var needToCreate, needToUpdate bool
 	oldSts := &appsv1.StatefulSet{}
@@ -476,12 +483,6 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if gw == nil {
 		return ctrl.Result{}, nil
 	}
-	// validate vpn gw
-	if err := r.validateVpnGw(gw, namespacedName); err != nil {
-		r.Log.Error(err, "failed to validate vpn gw")
-		return ctrl.Result{}, err
-	}
-	// fetch vpn gw statefulset, if not exist, create it
 
 	r.Handler = r.handleAddOrUpdateVpnGw
 	// TODO:// Handler should set in main.go
