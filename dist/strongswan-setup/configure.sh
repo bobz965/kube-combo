@@ -3,14 +3,18 @@ set -euo pipefail
 # ipsec site-to-site vpn setup: https://github.com/strongswan/strongswan#site-to-site-case
 # strongswan pki gen ref: https://www.digitalocean.com/community/tutorials/how-to-set-up-an-ikev2-vpn-server-with-strongswan-on-ubuntu-22-04
 # generate pems
-# strongswanCert.pem should be the same between local and remote ipsec vpn gw
 
+# strongswanCert.pem should be the same between local and remote ipsec vpn gw in site-to-site case
 # 1. generate root private key cert
-strongswan pki --gen --type ed25519 --outform pem > /ipsec.d/private/strongswanKey.pem
+if [ ! -e /ipsec.d/private/strongswanKey.pem ]
+then
+  echo "generate new generate root private key cert"
+  strongswan pki --gen --type ed25519 --outform pem > /ipsec.d/private/strongswanKey.pem
 
-strongswan pki --self --ca --lifetime 3652 --in /ipsec.d/private/strongswanKey.pem \
+  strongswan pki --self --ca --lifetime 3652 --in /ipsec.d/private/strongswanKey.pem \
            --dn "C=CH, O=strongSwan, CN=strongSwan Root CA" \
            --outform pem > /ipsec.d/cacerts/strongswanCert.pem
+fi
 
 # use env HOSTNAME as is HOSTNAME to replace moon
 # 2. generate vpn server private key cert
@@ -73,4 +77,3 @@ sed 's|LOCAL_TS|'"${LOCAL_SUBNET_CIDR}"'|' -i ${MY_SWANCTL_CONF}
 # load and start
 swanctl --load-creds
 swanctl --load-conns
-# swanctl --start --ike=2
