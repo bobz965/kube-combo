@@ -1,7 +1,7 @@
 FROM rockylinux:9.2
 
 RUN dnf install -y epel-release && \
-    dnf install -y strongswan strongswan-libipsec strongswan-sqlite iproute && \
+    dnf install -y strongswan strongswan-libipsec strongswan-sqlite iproute iputils nc tcpdump && \
     dnf clean all
 
 RUN mkdir -p /ipsec.d/{cacerts,certs,private} && chmod 700 /ipsec.d

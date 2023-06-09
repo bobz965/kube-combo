@@ -64,9 +64,14 @@ const (
 	KubeovnIngressRateAnnotation = "ovn.kubernetes.io/ingress_rate"
 	KubeovnEgressRateAnnotation  = "ovn.kubernetes.io/egress_rate"
 
-	IpSecLocalPort  = 500
-	IpSecRemotePort = 4500
-	IpsecProto      = "UDP"
+	IpSecBootPcPortKey = "bootpc"
+	IpSecBootPcPort    = 68
+	IpSecIsakmpPortKey = "isakmp"
+	IpSecIsakmpPort    = 500
+	IpSecNatPortKey    = "nat"
+	IpSecNatPort       = 4500
+
+	IpsecProto = "UDP"
 
 	// vpn gw pod env
 	OvpnProtoKey      = "OVPN_PROTO"
@@ -303,16 +308,20 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				},
 			},
 			Command: []string{IpsecVpnStartUpCMD},
-			// Args:    []string{"-c", "sleep infinity"},
 			Ports: []corev1.ContainerPort{
 				{
-					ContainerPort: IpSecLocalPort,
-					Name:          IpsecVpnLocalPortKey,
+					ContainerPort: IpSecIsakmpPort,
+					Name:          IpSecIsakmpPortKey,
 					Protocol:      corev1.Protocol(IpsecProto),
 				},
 				{
-					ContainerPort: IpSecRemotePort,
-					Name:          IpsecVpnRemotePortKey,
+					ContainerPort: IpSecBootPcPort,
+					Name:          IpSecBootPcPortKey,
+					Protocol:      corev1.Protocol(IpsecProto),
+				},
+				{
+					ContainerPort: IpSecNatPort,
+					Name:          IpSecNatPortKey,
 					Protocol:      corev1.Protocol(IpsecProto)},
 			},
 			Env: []corev1.EnvVar{

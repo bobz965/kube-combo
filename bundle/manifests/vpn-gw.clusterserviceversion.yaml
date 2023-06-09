@@ -21,7 +21,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2023-06-09T01:59:28Z"
+    createdAt: "2023-06-09T10:05:04Z"
     operators.operatorframework.io/builder: operator-sdk-v1.28.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4-alpha
   name: vpn-gw.v0.0.1
