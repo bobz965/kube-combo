@@ -40,6 +40,8 @@ type VpnGwSpec struct {
 
 	// vpn gw static ip
 	Ip string `json:"ip"`
+	// vpn gw static public ip, floating ip or router lb ip
+	PublicIp string `json:"publicIp"`
 	// pod subnet
 	// the vpn gw server pod running inside in this pod
 	// user can access all pod in this subnet via vpn gw
@@ -91,6 +93,7 @@ type VpnGwStatus struct {
 	Memory           string              `json:"memory" patchStrategy:"merge"`
 	QoSBandwidth     string              `json:"qosBandwidth" patchStrategy:"merge"`
 	Ip               string              `json:"ip" patchStrategy:"merge"`
+	PublicIp         string              `json:"publicIp" patchStrategy:"merge"`
 	Subnet           string              `json:"subnet" patchStrategy:"merge"`
 	Replicas         int32               `json:"replicas" patchStrategy:"merge"`
 	Selector         []string            `json:"selector,omitempty" patchStrategy:"merge"`
@@ -117,6 +120,7 @@ type VpnGwStatus struct {
 //+kubebuilder:storageversion
 //+kubebuilder:printcolumn:name="Subnet",type=string,JSONPath=`.status.subnet`
 //+kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.ip`
+//+kubebuilder:printcolumn:name="PublicIP",type=string,JSONPath=`.status.publicIp`
 //+kubebuilder:printcolumn:name="SSLVPN",type=string,JSONPath=`.status.sslVpnGwEnable`
 // +kubebuilder:printcolumn:name="OvpnCipher",type=string,JSONPath=`.status.ovpnCipher`
 //+kubebuilder:printcolumn:name="IPSecVPN",type=string,JSONPath=`.status.ipsecVpnGwEnable`

@@ -6,6 +6,7 @@ set -euo pipefail
 
 # strongswanCert.pem should be the same between local and remote ipsec vpn gw in site-to-site case
 # 1. generate root private key cert
+MY_CN="${HOSTNAME}.strongswan.org"
 if [ ! -e /ipsec.d/private/strongswanKey.pem ]
 then
   echo "generate new generate root private key cert"
@@ -21,8 +22,8 @@ fi
 strongswan pki --gen --type ed25519 --outform pem > /ipsec.d/private/${HOSTNAME}Key.pem
 
 strongswan pki --req --type priv --in /ipsec.d/private/${HOSTNAME}Key.pem \
-          --dn "C=CH, O=strongswan, CN=moon.strongswan.org" \
-          --san moon.strongswan.org --outform pem > /ipsec.d/private/${HOSTNAME}Req.pem
+          --dn "C=CH, O=strongswan, CN=${MY_CN}" \
+          --san ${MY_CN} --outform pem > /ipsec.d/private/${HOSTNAME}Req.pem
 
 strongswan pki --issue --cacert /ipsec.d/cacerts/strongswanCert.pem --cakey /ipsec.d/private/strongswanKey.pem \
             --type pkcs10 --in /ipsec.d/private/${HOSTNAME}Req.pem --serial 01 --lifetime 3652 \
@@ -69,10 +70,13 @@ LOCAL_SUBNET_CIDR="${NETWORK}/${NETMASK}"
 # configure swanctl.conf
 MY_SWANCTL_CONF="/etc/strongswan/swanctl/conf.d/${HOSTNAME}swanctl.conf"
 \cp swanctl.conf operator-swansctl.conf
+sed 's|LOCAL_ADDRS|'"${PublicIp}"'|' -i operator-swansctl.conf
 sed 's|REMOTE_ADDRS|'"${IPSEC_REMOTE_ADDRS}"'|' -i operator-swansctl.conf
 sed 's|REMOTE_TS|'"${IPSEC_REMOTE_TS}"'|' -i operator-swansctl.conf
 sed 's|LOCAL_CERT_PEM|'"${LOCAL_CERT_PEM}"'|' -i operator-swansctl.conf
 sed 's|LOCAL_TS|'"${LOCAL_SUBNET_CIDR}"'|' -i operator-swansctl.conf
+sed 's|HOSTNAME.strongswan.org|'"${MY_CN}"'|' -i operator-swansctl.conf
+
 \cp operator-swansctl.conf ${MY_SWANCTL_CONF}
 
 # load and start

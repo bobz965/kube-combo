@@ -71,7 +71,8 @@ const (
 	IpSecNatPortKey    = "nat"
 	IpSecNatPort       = 4500
 
-	IpsecProto = "UDP"
+	IpsecProto  = "UDP"
+	PublicIpKey = "PUBLIC_IP"
 
 	// vpn gw pod env
 	OvpnProtoKey      = "OVPN_PROTO"
@@ -284,6 +285,10 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					Name:  OvpnSubnetCidrKey,
 					Value: gw.Spec.OvpnSubnetCidr,
 				},
+				{
+					Name:  PublicIpKey,
+					Value: gw.Spec.PublicIp,
+				},
 			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			SecurityContext: &corev1.SecurityContext{
@@ -332,6 +337,10 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				{
 					Name:  IpsecRemoteTsKey,
 					Value: gw.Spec.IpsecRemoteTs,
+				},
+				{
+					Name:  PublicIpKey,
+					Value: gw.Spec.PublicIp,
 				},
 			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
