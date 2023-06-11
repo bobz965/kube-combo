@@ -64,7 +64,11 @@ make docker-build docker-push
 
 
 # build openvpn image
+
 make docker-build-ssl-vpn docker-push-ssl-vpn
+
+make docker-build-ipsec-vpn docker-push-ipsec-vpn
+
 ```
 
 OLM

@@ -21,6 +21,9 @@ spec:
     - jsonPath: .status.ip
       name: IP
       type: string
+    - jsonPath: .status.publicIp
+      name: PublicIP
+      type: string
     - jsonPath: .status.sslVpnGwEnable
       name: SSLVPN
       type: string
@@ -914,6 +917,9 @@ spec:
               ovpnSubnetCidr:
                 description: ovpn ssl vpn clinet server subnet cidr 10.240.0.0/16
                 type: string
+              publicIp:
+                description: vpn gw static public ip, floating ip or router lb ip
+                type: string
               qosBandwidth:
                 description: 1Mbps bandwidth at least
                 type: string
@@ -988,6 +994,7 @@ spec:
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
+            - publicIp
             - qosBandwidth
             - replicas
             - sslVpnImage
@@ -1918,6 +1925,8 @@ spec:
                 type: string
               ovpnSubnetCidr:
                 type: string
+              publicIp:
+                type: string
               qosBandwidth:
                 type: string
               replicas:
@@ -1983,6 +1992,7 @@ spec:
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
+            - publicIp
             - qosBandwidth
             - replicas
             - sslVpnImage
