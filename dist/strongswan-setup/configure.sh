@@ -70,7 +70,7 @@ LOCAL_SUBNET_CIDR="${NETWORK}/${NETMASK}"
 # configure swanctl.conf
 MY_SWANCTL_CONF="/etc/strongswan/swanctl/conf.d/${HOSTNAME}swanctl.conf"
 \cp swanctl.conf operator-swansctl.conf
-sed 's|LOCAL_ADDRS|'"${PublicIp}"'|' -i operator-swansctl.conf
+sed 's|LOCAL_ADDRS|'"${PUBLIC_IP}"'|' -i operator-swansctl.conf
 sed 's|REMOTE_ADDRS|'"${IPSEC_REMOTE_ADDRS}"'|' -i operator-swansctl.conf
 sed 's|REMOTE_TS|'"${IPSEC_REMOTE_TS}"'|' -i operator-swansctl.conf
 sed 's|LOCAL_CERT_PEM|'"${LOCAL_CERT_PEM}"'|' -i operator-swansctl.conf
