@@ -1,7 +1,11 @@
 FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt upgrade -y && apt install python3 hostname iproute2 ncat iptables tcpdump ipset curl openssl dnsutils net-tools charon-systemd -y && \
+RUN apt update && apt upgrade -y && apt install python3 hostname iproute2 inetutils-ping arping ncat iptables tcpdump ipset curl openssl dnsutils net-tools charon-systemd -y && \
+        rm -rf /var/lib/apt/lists/* && \
+        rm -rf /etc/localtime
+
+RUN apt update && apt upgrade -y && apt install curl nodejs -y && \
         rm -rf /var/lib/apt/lists/* && \
         rm -rf /etc/localtime
 
