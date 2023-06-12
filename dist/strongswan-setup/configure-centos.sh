@@ -80,6 +80,6 @@ sed 's|HOSTNAME.strongswan.org|'"${MY_CN}"'|' -i operator-swansctl.conf
 \cp operator-swansctl.conf ${MY_SWANCTL_CONF}
 \cp strongswan.conf /etc/strongswan/strongswan.conf
 
-# load and start
+# new version 5.9.10 load and start
 swanctl --load-creds
 swanctl --load-conns

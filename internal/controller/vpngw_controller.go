@@ -53,6 +53,7 @@ const (
 	SslVpnStartUpCMD = "/etc/openvpn/setup/configure.sh"
 	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
 	IpsecVpnStartUpCMD = "/usr/sbin/charon-systemd"
+	// IpsecVpnReloadCMD  = "/usr/sbin/swanctl --load-all --noprompt"
 
 	EnableSslVpnLabel   = "enable_ssl_vpn"
 	EnableIpsecVpnLabel = "enable_ipsec_vpn"
@@ -60,6 +61,7 @@ const (
 	KubeovnIpAddressAnnotation = "ovn.kubernetes.io/ip_address"
 	// TODO:// HA use ip pool
 	KubeovnLogicalSwitchAnnotation = "ovn.kubernetes.io/logical_switch"
+	AttachmentNetworkAnnotation    = "k8s.v1.cni.cncf.io/networks"
 
 	KubeovnIngressRateAnnotation = "ovn.kubernetes.io/ingress_rate"
 	KubeovnEgressRateAnnotation  = "ovn.kubernetes.io/egress_rate"
@@ -238,8 +240,9 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 		newPodAnnotations = oldSts.Annotations
 	}
 	podAnnotations := map[string]string{
-		KubeovnLogicalSwitchAnnotation: gw.Spec.Subnet,
-		KubeovnIpAddressAnnotation:     gw.Spec.Ip,
+		KubeovnLogicalSwitchAnnotation: gw.Spec.PublicSubnet, // eth0 use public subnet
+		AttachmentNetworkAnnotation:    gw.Spec.Subnet,       // net1 use private subnet
+		KubeovnIpAddressAnnotation:     gw.Spec.PublicIp,     // public ip has no fip relationship with private ip
 		KubeovnIngressRateAnnotation:   gw.Spec.QoSBandwidth,
 		KubeovnEgressRateAnnotation:    gw.Spec.QoSBandwidth,
 	}

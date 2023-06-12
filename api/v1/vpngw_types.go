@@ -46,8 +46,12 @@ type VpnGwSpec struct {
 	// the vpn gw server pod running inside in this pod
 	// user can access all pod in this subnet via vpn gw
 	// if use subnet lb vip in this subnet, so no need svc cidr in this case
-	Subnet   string `json:"subnet"`
-	Replicas int32  `json:"replicas"`
+	// vpc subnet use as eth1
+	Subnet string `json:"subnet"`
+	// pubblic subnet use as eth0
+	PublicSubnet string `json:"publicSubnet"`
+
+	Replicas int32 `json:"replicas"`
 	// vpn gw pod node selector
 	Selector []string `json:"selector,omitempty"`
 	// vpn gw pod tolerations
@@ -95,6 +99,7 @@ type VpnGwStatus struct {
 	Ip               string              `json:"ip" patchStrategy:"merge"`
 	PublicIp         string              `json:"publicIp" patchStrategy:"merge"`
 	Subnet           string              `json:"subnet" patchStrategy:"merge"`
+	PublicSubnet     string              `json:"publicSubnet" patchStrategy:"merge"`
 	Replicas         int32               `json:"replicas" patchStrategy:"merge"`
 	Selector         []string            `json:"selector,omitempty" patchStrategy:"merge"`
 	Tolerations      []corev1.Toleration `json:"tolerations,omitempty" patchStrategy:"merge"`
