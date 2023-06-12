@@ -921,6 +921,9 @@ spec:
               publicIp:
                 description: vpn gw static public ip, floating ip or router lb ip
                 type: string
+              publicSubnet:
+                description: pubblic subnet use as eth0
+                type: string
               qosBandwidth:
                 description: 1Mbps bandwidth at least
                 type: string
@@ -940,7 +943,8 @@ spec:
               subnet:
                 description: pod subnet the vpn gw server pod running inside in this
                   pod user can access all pod in this subnet via vpn gw if use subnet
-                  lb vip in this subnet, so no need svc cidr in this case
+                  lb vip in this subnet, so no need svc cidr in this case vpc subnet
+                  use as eth1
                 type: string
               tolerations:
                 description: vpn gw pod tolerations
@@ -996,6 +1000,7 @@ spec:
             - ovpnProto
             - ovpnSubnetCidr
             - publicIp
+            - publicSubnet
             - qosBandwidth
             - replicas
             - sslVpnImage
@@ -1928,6 +1933,8 @@ spec:
                 type: string
               publicIp:
                 type: string
+              publicSubnet:
+                type: string
               qosBandwidth:
                 type: string
               replicas:
@@ -1994,6 +2001,7 @@ spec:
             - ovpnProto
             - ovpnSubnetCidr
             - publicIp
+            - publicSubnet
             - qosBandwidth
             - replicas
             - sslVpnImage
