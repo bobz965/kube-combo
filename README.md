@@ -57,7 +57,7 @@ make manifests
 Docker
 
 ``` bash
-make docker-build docker-push 
+make docker-build docker-push
 
 # make docker-build 
 # make docker-push
