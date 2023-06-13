@@ -3,13 +3,13 @@ set -eux
 
 domain=$(hostname --fqdn)
 
-if  [ "$(hostname)" = 'moon-ubuntu' ]; then
-local='moon-ubuntu'
-remote='sun-ubuntu'
+if  [ "$(hostname)" = 'moon-0-ubuntu' ]; then
+local='moon-0-ubuntu'
+remote='sun-0-ubuntu'
 remote_ip='10.2.0.4'
 else
-local='sun-ubuntu'
-remote='moon-ubuntu'
+local='sun-0-ubuntu'
+remote='moon-0-ubuntu'
 remote_ip='10.1.0.4'
 fi
 

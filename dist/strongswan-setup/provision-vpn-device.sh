@@ -3,16 +3,16 @@ set -eux
 
 domain=$(hostname --fqdn)
 
-if  [ "$(hostname)" = 'moon' ]; then
-local='moon'
+if  [ "$(hostname)" = 'moon-0' ]; then
+local='moon-0'
 local_ts='10.1.0.0/16'
-remote='sun'
+remote='sun-0'
 remote_ts='10.2.0.0/16'
 remote_ip='10.2.0.2'
 else
-local='sun'
+local='sun-0'
 local_ts='10.2.0.0/16'
-remote='moon'
+remote='moon-0'
 remote_ts='10.1.0.0/16'
 remote_ip='10.1.0.2'
 fi
@@ -21,8 +21,8 @@ fi
 # install the strongswan charon daemon (has native systemd integration).
 # NB do not install the strongswan package as it will use the legacy stuff (e.g. ipsec.conf).
 
-apt-get install -y charon-systemd
-systemctl status strongswan-swanctl
+# apt-get install -y charon-systemd
+# systemctl status strongswan-swanctl
 swanctl --version
 
 

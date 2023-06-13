@@ -17,7 +17,7 @@ then
            --outform pem > /ipsec.d/cacerts/strongswanCert.pem
 fi
 
-# use env HOSTNAME as is HOSTNAME to replace moon
+# use env HOSTNAME as is HOSTNAME to replace moon-0
 # 2. generate vpn server private key cert
 strongswan pki --gen --type ed25519 --outform pem > /ipsec.d/private/${HOSTNAME}Key.pem
 
