@@ -1,0 +1,7 @@
+# cat hosts >> /etc/hosts
+
+# 127.0.2.1 moon-0.vpn.example.com moon 
+# 127.0.2.1 sun.vpn.example.com sun
+
+192.168.7.11 moon-0.vpn.example.com
+192.168.7.22 sun-0.vpn.example.com

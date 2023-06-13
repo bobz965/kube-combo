@@ -58,13 +58,16 @@ const (
 	EnableSslVpnLabel   = "enable_ssl_vpn"
 	EnableIpsecVpnLabel = "enable_ipsec_vpn"
 
-	KubeovnIpAddressAnnotation = "ovn.kubernetes.io/ip_address"
+	KubeovnIpAddressAnnotation   = "ovn.kubernetes.io/ip_address"
+	VpcSubnetIpAddressAnnotation = "private.default.ovn.kubernetes.io/ip_address"
+
 	// TODO:// HA use ip pool
 	KubeovnLogicalSwitchAnnotation = "ovn.kubernetes.io/logical_switch"
 
 	AttachmentNetworkAnnotation = "k8s.v1.cni.cncf.io/networks"
 	DefaultPrivateNAD           = "default/private"
 	VpcSubnetAnnotation         = "private.default.ovn.kubernetes.io/logical_switch"
+
 	// k8s.v1.cni.cncf.io/networks: default/private
 	// private.default.ovn.kubernetes.io/logical_switch: vpc-subnet
 
@@ -245,10 +248,11 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 		newPodAnnotations = oldSts.Annotations
 	}
 	podAnnotations := map[string]string{
-		KubeovnLogicalSwitchAnnotation: gw.Spec.PublicSubnet, // eth0 use public subnet
 		AttachmentNetworkAnnotation:    DefaultPrivateNAD,    // net1 use private subnet
+		KubeovnLogicalSwitchAnnotation: gw.Spec.PublicSubnet, // eth0 use public subnet
 		VpcSubnetAnnotation:            gw.Spec.Subnet,
 		KubeovnIpAddressAnnotation:     gw.Spec.PublicIp, // public ip has no fip relationship with private ip
+		VpcSubnetIpAddressAnnotation:   gw.Spec.Ip,
 		KubeovnIngressRateAnnotation:   gw.Spec.QoSBandwidth,
 		KubeovnEgressRateAnnotation:    gw.Spec.QoSBandwidth,
 	}

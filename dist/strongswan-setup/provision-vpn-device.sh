@@ -5,16 +5,18 @@ domain=$(hostname --fqdn)
 
 if  [ "$(hostname)" = 'moon-0' ]; then
 local='moon-0'
-local_ts='10.1.0.0/16'
+local_ts='10.1.0.0/24'
 remote='sun-0'
-remote_ts='10.2.0.0/16'
-remote_ip='10.2.0.2'
+remote_ts='10.2.0.0/24'
+remote_ip='10.2.0.22'
+echo "init local $(local) $(local_ts) --> remote $(remote) $(remote_ts) $(remote_ip)"
 else
 local='sun-0'
-local_ts='10.2.0.0/16'
+local_ts='10.2.0.0/24'
 remote='moon-0'
-remote_ts='10.1.0.0/16'
-remote_ip='10.1.0.2'
+remote_ts='10.1.0.0/24'
+remote_ip='10.1.0.11'
+echo "init local $(local) $(local_ts) --> remote $(remote) $(remote_ts) $(remote_ip)"
 fi
 
 #
@@ -81,8 +83,8 @@ swanctl --list-sas
 swanctl --stats
 ip xfrm state
 ip xfrm policy
-systemctl status strongswan-swanctl
-systemctl restart strongswan-swanctl
-journalctl -u charon-systemd
-journalctl -u strongswan-swanctl
+#systemctl status strongswan-swanctl
+#systemctl restart strongswan-swanctl
+#journalctl -u charon-systemd
+#journalctl -u strongswan-swanctl
 EOF

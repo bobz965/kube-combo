@@ -9,7 +9,7 @@ RUN apt update && apt upgrade -y && apt install curl nodejs -y && \
         rm -rf /var/lib/apt/lists/* && \
         rm -rf /etc/localtime
 
-RUN mkdir -p /ipsec.d/{cacerts,certs,private} && chmod 700 /ipsec.d
+# RUN mkdir -p /ipsec.d/{cacerts,certs,private} && chmod 700 /ipsec.d
 COPY dist/strongswan-setup /
 RUN chmod +x *.sh
 
