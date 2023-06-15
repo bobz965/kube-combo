@@ -49,8 +49,9 @@ const (
 
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
-
-	SslVpnStartUpCMD = "/etc/openvpn/setup/configure.sh"
+	SslVpnSecretPath      = "/etc/openvpn/certs"
+	IpsecVpnSecretPath    = "/etc/ipsec/certs"
+	SslVpnStartUpCMD      = "/etc/openvpn/setup/configure.sh"
 	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
 	IpsecVpnStartUpCMD = "/usr/sbin/charon-systemd"
 	// IpsecVpnReloadCMD  = "/usr/sbin/swanctl --load-all --noprompt"
@@ -250,10 +251,19 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	}
 
 	containers := []corev1.Container{}
+	volumes := []corev1.Volume{}
 	if gw.Spec.EnableSslVpn {
 		sslContainer := corev1.Container{
 			Name:  SslVpnServer,
 			Image: gw.Spec.SslVpnImage,
+			// mount x.509 secret
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      gw.Spec.SslVpnSecret,
+					MountPath: SslVpnSecretPath,
+					ReadOnly:  true,
+				},
+			},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
@@ -298,12 +308,31 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				AllowPrivilegeEscalation: &allowPrivilegeEscalation,
 			},
 		}
+		sslSecretVolume := corev1.Volume{
+			Name: gw.Spec.SslVpnSecret,
+			// define secrect volume
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: gw.Spec.SslVpnSecret,
+					Optional:   &[]bool{true}[0],
+				},
+			},
+		}
+		volumes = append(volumes, sslSecretVolume)
 		containers = append(containers, sslContainer)
 	}
 	if gw.Spec.EnableIpsecVpn {
 		ipsecContainer := corev1.Container{
 			Name:  IpsecVpnServer,
 			Image: gw.Spec.IpsecVpnImage,
+			// mount x.509 secret
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      gw.Spec.IpsecSecret,
+					MountPath: IpsecVpnSecretPath,
+					ReadOnly:  true,
+				},
+			},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
@@ -351,6 +380,17 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				AllowPrivilegeEscalation: &allowPrivilegeEscalation,
 			},
 		}
+		ipsecSecretVolume := corev1.Volume{
+			// define secrect volume
+			Name: gw.Spec.IpsecSecret,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: gw.Spec.IpsecSecret,
+					Optional:   &[]bool{true}[0],
+				},
+			},
+		}
+		volumes = append(volumes, ipsecSecretVolume)
 		containers = append(containers, ipsecContainer)
 	}
 
@@ -372,6 +412,7 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				},
 				Spec: corev1.PodSpec{
 					Containers: containers,
+					Volumes:    volumes,
 				},
 			},
 			UpdateStrategy: appsv1.StatefulSetUpdateStrategy{
