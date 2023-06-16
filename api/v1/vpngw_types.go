@@ -65,7 +65,7 @@ type VpnGwSpec struct {
 	// all ssl vpn spec start with ovpn
 
 	// ssl vpn secret name, the secret should in the same namespace as the vpn gw
-	SslVpnSecret string `json:"sslVpnSecret"`
+	SslSecret string `json:"sslSecret,omitempty"`
 
 	// ovpn ssl vpn proto, udp or tcp, udp probably is better
 	OvpnCipher string `json:"ovpnCipher"`
@@ -86,7 +86,7 @@ type VpnGwSpec struct {
 	// all ipsec vpn spec start with ipsec
 
 	// ipsec vpn secret name, the secret should in the same namespace as the vpn gw
-	IpsecSecret string `json:"ipsecVpnSecret"`
+	IpsecSecret string `json:"ipsecSecret,omitempty"`
 
 	// remote ipsec vpn server ips
 	IpsecRemoteAddrs string `json:"ipsecRemoteAddrs"`
@@ -112,14 +112,14 @@ type VpnGwStatus struct {
 	Tolerations      []corev1.Toleration `json:"tolerations,omitempty" patchStrategy:"merge"`
 	Affinity         corev1.Affinity     `json:"affinity,omitempty" patchStrategy:"merge"`
 	EnableSslVpn     bool                `json:"enableSslVpn" patchStrategy:"merge"`
-	SslVpnSecret     string              `json:"sslVpnSecret"  patchStrategy:"merge"`
+	SslSecret        string              `json:"sslSecret"  patchStrategy:"merge"`
 	SslVpnImage      string              `json:"sslVpnImage" patchStrategy:"merge"`
 	OvpnCipher       string              `json:"ovpnCipher" patchStrategy:"merge"`
 	OvpnProto        string              `json:"ovpnProto" patchStrategy:"merge"`
 	OvpnPort         int                 `json:"ovpnPort" patchStrategy:"merge"`
 	OvpnSubnetCidr   string              `json:"ovpnSubnetCidr" patchStrategy:"merge"`
 	EnableIpsecVpn   bool                `json:"enableIpsecVpn" patchStrategy:"merge"`
-	IpsecSecret      string              `json:"ipsecVpnSecret"  patchStrategy:"merge"`
+	IpsecSecret      string              `json:"ipsecSecret"  patchStrategy:"merge"`
 	IpsecVpnImage    string              `json:"ipsecVpnImage" patchStrategy:"merge"`
 	IpsecRemoteAddrs string              `json:"ipsecRemoteAddrs" patchStrategy:"merge"`
 	IpsecRemoteTs    string              `json:"ipsecRemoteTs" patchStrategy:"merge"`

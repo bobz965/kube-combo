@@ -88,6 +88,8 @@ make bundle bundle-build bundle-push
 
 ### 3.2 基于 olm 部署
 
+目前认为 olm 本身不够成熟，基于 `make deploy` 来部署
+
 [operator-sdk 二进制安装方式](https://sdk.operatorframework.io/docs/installation/)
 
 ```bash
