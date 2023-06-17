@@ -45,8 +45,8 @@ fi
 
 # create the client certificates to authenticate into the vpn.
 vpn_client_common_names=(
-    'moon-0.vpn.example.com'
-    'sun-0.vpn.example.com'
+    'moon-0.vpn.gw.com'
+    'sun-0.vpn.gw.com'
 )
 for common_name in "${vpn_client_common_names[@]}"; do
     if [ ! -f $common_name-crt.pem ]; then
