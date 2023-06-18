@@ -34,3 +34,7 @@ if [ ! -f $hostname-crt.pem ]; then
         -in  $hostname-csr.pem \
         -out $hostname-crt.pem
 fi
+
+
+# 注意 CN 非常关键，openssl req 和 /etc/swanctl/swanctl.conf 中的 CN 必须一致
+# 否则无法建立隧道
