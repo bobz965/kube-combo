@@ -50,6 +50,7 @@ const (
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
 	SslSecretPath         = "/etc/openvpn/certs"
+	X509CaSecretPath      = "/etc/ipsec/x509ca"
 	IpsecVpnSecretPath    = "/etc/ipsec/certs"
 	SslVpnStartUpCMD      = "/etc/openvpn/setup/configure.sh"
 	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
@@ -332,6 +333,11 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					MountPath: IpsecVpnSecretPath,
 					ReadOnly:  true,
 				},
+				{
+					Name:      gw.Spec.IpsecCaSecret,
+					MountPath: X509CaSecretPath,
+					ReadOnly:  true,
+				},
 			},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
@@ -391,6 +397,16 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 			},
 		}
 		volumes = append(volumes, ipsecSecretVolume)
+		x509CaSecretVolume := corev1.Volume{
+			Name: gw.Spec.IpsecCaSecret,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: gw.Spec.IpsecCaSecret,
+					Optional:   &[]bool{true}[0],
+				},
+			},
+		}
+		volumes = append(volumes, x509CaSecretVolume)
 		containers = append(containers, ipsecContainer)
 	}
 
