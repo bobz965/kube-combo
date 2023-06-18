@@ -1,8 +1,7 @@
 #!/bin/bash
 set -eux
 
-domain=$(hostname --fqdn)
-
+hostname=$(hostname --fqdn)
 if  [ "$(hostname)" = 'moon-0' ]; then
 local='moon-0'
 local_ts='10.1.0.0/24'

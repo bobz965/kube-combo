@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eux
 
-domain=$(hostname --fqdn)
+hostname=$(hostname --fqdn)
 if  [ "$(hostname)" = 'moon-0' ]; then
 remote_ip='10.2.0.22'
 else
