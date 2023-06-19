@@ -28,7 +28,9 @@ cidr2net() {
     echo "${netOctets#.}"
 }
 
-/etc/openvpn/setup/setup-certs.sh
+/etc/openvpn/setup/copy-certs.sh
+# or
+# /etc/openvpn/setup/setup-certs.sh
 
 intAndIP="$(ip route get 8.8.8.8 | awk '/8.8.8.8/ {print $5 "-" $7}')"
 int="${intAndIP%-*}"
