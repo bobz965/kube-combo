@@ -46,7 +46,7 @@ make manifests
 
 ### 2.2 ipsec vpn
 
-该功能基于 openvpn 实现，[用于 Site-to-Site 场景](https://github.com/strongswan/strongswan#site-to-site-case) ，使用 IKEv2， 不再使用 IKEv1
+该功能基于 openvpn 实现，[用于 Site-to-Site 场景](https://github.com/strongswan/strongswan#site-to-site-case) ，推荐使用 IKEv2， IKEv1 安全性较低
 
 ## 3. 维护
 
@@ -57,7 +57,7 @@ make manifests
 Docker
 
 ``` bash
-make docker-build docker-push 
+make docker-build docker-push
 
 # make docker-build 
 # make docker-push
@@ -86,7 +86,18 @@ make bundle bundle-build bundle-push
 
 ```
 
-### 3.2 基于 olm 部署
+### 3.2  部署
+
+
+目前认为 olm 本身不够成熟，基于 `make deploy` 来部署
+
+``` bash
+
+cd config/manager && /root/kube-ovn-operator/bin/kustomize edit set image controller=registry.cn-hangzhou.aliyuncs.com/bobz/kube-ovn-operator:latest
+/root/kube-ovn-operator/bin/kustomize build config/default | kubectl apply -f -
+
+
+```
 
 [operator-sdk 二进制安装方式](https://sdk.operatorframework.io/docs/installation/)
 
@@ -117,5 +128,35 @@ kubectl get csv
 k get operator
 
 operator-sdk cleanup vpn-gw
+
+```
+
+### 4. certmanager
+
+``` bash
+operator-sdk olm install
+
+# 功能上 operator-sdk == kubectl operator 
+
+kubectl krew install operator
+kubectl create ns cert-manager
+kubectl operator install cert-manager -n cert-manager --channel candidate --approval Automatic --create-operator-group 
+
+# kubectl operator install cert-manager -n operators --channel stable --approval Automatic
+
+kubectl get events -w -n operators
+
+kubectl operator list
+kubectl operator uninstall cert-manager -n cert-manager
+
+# 目前 基于operator 安装的版本普遍较旧，差了一个大版本，可能要跟下 operator 的维护策略
+# 目前认为最好是基于 kubectl apply 安装最新的
+
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.1/cert-manager.yaml
+kubectl get pods -n cert-manager
+kubectl get crd | grep cert-manager.io
+
+# 清理: https://cert-manager.io/docs/installation/kubectl/
+
 
 ```

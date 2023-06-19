@@ -49,8 +49,9 @@ const (
 
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
-
-	SslVpnStartUpCMD = "/etc/openvpn/setup/configure.sh"
+	SslSecretPath         = "/etc/openvpn/certs"
+	IpsecVpnSecretPath    = "/etc/ipsec/certs"
+	SslVpnStartUpCMD      = "/etc/openvpn/setup/configure.sh"
 	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
 	IpsecVpnStartUpCMD = "/usr/sbin/charon-systemd"
 	// IpsecVpnReloadCMD  = "/usr/sbin/swanctl --load-all --noprompt"
@@ -58,18 +59,10 @@ const (
 	EnableSslVpnLabel   = "enable_ssl_vpn"
 	EnableIpsecVpnLabel = "enable_ipsec_vpn"
 
-	KubeovnIpAddressAnnotation   = "ovn.kubernetes.io/ip_address"
-	VpcSubnetIpAddressAnnotation = "private.default.ovn.kubernetes.io/ip_address"
+	KubeovnIpAddressAnnotation = "ovn.kubernetes.io/ip_address"
 
 	// TODO:// HA use ip pool
 	KubeovnLogicalSwitchAnnotation = "ovn.kubernetes.io/logical_switch"
-
-	AttachmentNetworkAnnotation = "k8s.v1.cni.cncf.io/networks"
-	DefaultPrivateNAD           = "default/private"
-	VpcSubnetAnnotation         = "private.default.ovn.kubernetes.io/logical_switch"
-
-	// k8s.v1.cni.cncf.io/networks: default/private
-	// private.default.ovn.kubernetes.io/logical_switch: vpc-subnet
 
 	KubeovnIngressRateAnnotation = "ovn.kubernetes.io/ingress_rate"
 	KubeovnEgressRateAnnotation  = "ovn.kubernetes.io/egress_rate"
@@ -248,11 +241,8 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 		newPodAnnotations = oldSts.Annotations
 	}
 	podAnnotations := map[string]string{
-		AttachmentNetworkAnnotation:    DefaultPrivateNAD,    // net1 use private subnet
-		KubeovnLogicalSwitchAnnotation: gw.Spec.PublicSubnet, // eth0 use public subnet
-		VpcSubnetAnnotation:            gw.Spec.Subnet,
-		KubeovnIpAddressAnnotation:     gw.Spec.PublicIp, // public ip has no fip relationship with private ip
-		VpcSubnetIpAddressAnnotation:   gw.Spec.Ip,
+		KubeovnLogicalSwitchAnnotation: gw.Spec.Subnet,
+		KubeovnIpAddressAnnotation:     gw.Spec.Ip,
 		KubeovnIngressRateAnnotation:   gw.Spec.QoSBandwidth,
 		KubeovnEgressRateAnnotation:    gw.Spec.QoSBandwidth,
 	}
@@ -261,10 +251,19 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	}
 
 	containers := []corev1.Container{}
+	volumes := []corev1.Volume{}
 	if gw.Spec.EnableSslVpn {
 		sslContainer := corev1.Container{
 			Name:  SslVpnServer,
 			Image: gw.Spec.SslVpnImage,
+			// mount x.509 secret
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      gw.Spec.SslSecret,
+					MountPath: SslSecretPath,
+					ReadOnly:  true,
+				},
+			},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
@@ -309,12 +308,31 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				AllowPrivilegeEscalation: &allowPrivilegeEscalation,
 			},
 		}
+		sslSecretVolume := corev1.Volume{
+			Name: gw.Spec.SslSecret,
+			// define secrect volume
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: gw.Spec.SslSecret,
+					Optional:   &[]bool{true}[0],
+				},
+			},
+		}
+		volumes = append(volumes, sslSecretVolume)
 		containers = append(containers, sslContainer)
 	}
 	if gw.Spec.EnableIpsecVpn {
 		ipsecContainer := corev1.Container{
 			Name:  IpsecVpnServer,
 			Image: gw.Spec.IpsecVpnImage,
+			// mount x.509 secret
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      gw.Spec.IpsecSecret,
+					MountPath: IpsecVpnSecretPath,
+					ReadOnly:  true,
+				},
+			},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceCPU:    resource.MustParse(gw.Spec.Cpu),
@@ -362,6 +380,17 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				AllowPrivilegeEscalation: &allowPrivilegeEscalation,
 			},
 		}
+		ipsecSecretVolume := corev1.Volume{
+			// define secrect volume
+			Name: gw.Spec.IpsecSecret,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: gw.Spec.IpsecSecret,
+					Optional:   &[]bool{true}[0],
+				},
+			},
+		}
+		volumes = append(volumes, ipsecSecretVolume)
 		containers = append(containers, ipsecContainer)
 	}
 
@@ -383,6 +412,7 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 				},
 				Spec: corev1.PodSpec{
 					Containers: containers,
+					Volumes:    volumes,
 				},
 			},
 			UpdateStrategy: appsv1.StatefulSetUpdateStrategy{

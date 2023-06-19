@@ -5,10 +5,6 @@ RUN apt update && apt upgrade -y && apt install python3 hostname vim tree iprout
         rm -rf /var/lib/apt/lists/* && \
         rm -rf /etc/localtime
 
-RUN apt update && apt upgrade -y && apt install curl nodejs -y && \
-        rm -rf /var/lib/apt/lists/* && \
-        rm -rf /etc/localtime
-
 COPY dist/strongswan-setup /
 RUN chmod +x *.sh
 

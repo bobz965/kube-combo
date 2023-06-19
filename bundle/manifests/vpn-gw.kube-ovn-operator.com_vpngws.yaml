@@ -900,14 +900,17 @@ spec:
               ipsecRemoteTs:
                 description: remote ipsec vpn server subnet cidrs
                 type: string
+              ipsecSecret:
+                description: ipsec vpn secret name, the secret should in the same
+                  namespace as the vpn gw
+                type: string
               ipsecVpnImage:
                 description: ipsec vpn server image, strongswan server
                 type: string
               memory:
                 type: string
               ovpnCipher:
-                description: ssl vpn use openvpn server all ssl vpn spec start with
-                  ovpn ovpn ssl vpn proto, udp or tcp, udp probably is better
+                description: ovpn ssl vpn proto, udp or tcp, udp probably is better
                 type: string
               ovpnPort:
                 description: ovpn ssl vpn port, default 1194 for udp, 443 for tcp
@@ -934,6 +937,10 @@ spec:
                 items:
                   type: string
                 type: array
+              sslSecret:
+                description: ssl vpn secret name, the secret should in the same namespace
+                  as the vpn gw
+                type: string
               sslVpnImage:
                 description: if use kube-ovn default subnet, svc cidr probably is
                   different, should be set pod svc cidr 10.96.0.0/20 OvpnSvcCidr string
@@ -992,6 +999,7 @@ spec:
             - ip
             - ipsecRemoteAddrs
             - ipsecRemoteTs
+            - ipsecSecret
             - ipsecVpnImage
             - memory
             - ovpnCipher
@@ -1002,6 +1010,7 @@ spec:
             - publicSubnet
             - qosBandwidth
             - replicas
+            - sslSecret
             - sslVpnImage
             - subnet
             type: object
@@ -1918,6 +1927,8 @@ spec:
                 type: string
               ipsecRemoteTs:
                 type: string
+              ipsecSecret:
+                type: string
               ipsecVpnImage:
                 type: string
               memory:
@@ -1943,6 +1954,8 @@ spec:
                 items:
                   type: string
                 type: array
+              sslSecret:
+                type: string
               sslVpnImage:
                 type: string
               subnet:
@@ -1993,6 +2006,7 @@ spec:
             - ip
             - ipsecRemoteAddrs
             - ipsecRemoteTs
+            - ipsecSecret
             - ipsecVpnImage
             - memory
             - ovpnCipher
@@ -2003,6 +2017,7 @@ spec:
             - publicSubnet
             - qosBandwidth
             - replicas
+            - sslSecret
             - sslVpnImage
             - subnet
             type: object
