@@ -18,7 +18,7 @@ fi
 
 #
 # configure ca.
-cp /etc/ipsec/x509ca/ca.crt /etc/swanctl/x509ca
+cp /etc/ipsec/certs/ca.crt /etc/swanctl/x509ca
 cp /etc/ipsec/certs/tls.key /etc/swanctl/private
 cp /etc/ipsec/certs/tls.crt /etc/swanctl/x509
 

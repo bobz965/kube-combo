@@ -85,9 +85,6 @@ type VpnGwSpec struct {
 	// ipsec use strongswan server
 	// all ipsec vpn spec start with ipsec
 
-	// ipsec vpn root ca secret name, the secret should in the same namespace as the vpn gw
-	IpsecCaSecret string `json:"ipsecCaSecret,omitempty"`
-
 	// ipsec vpn secret name, the secret should in the same namespace as the vpn gw
 	IpsecSecret string `json:"ipsecSecret,omitempty"`
 
@@ -123,7 +120,6 @@ type VpnGwStatus struct {
 	OvpnSubnetCidr   string              `json:"ovpnSubnetCidr" patchStrategy:"merge"`
 	EnableIpsecVpn   bool                `json:"enableIpsecVpn" patchStrategy:"merge"`
 	IpsecSecret      string              `json:"ipsecSecret"  patchStrategy:"merge"`
-	IpsecCaSecret    string              `json:"ipsecCaSecret"  patchStrategy:"merge"`
 	IpsecVpnImage    string              `json:"ipsecVpnImage" patchStrategy:"merge"`
 	IpsecRemoteAddrs string              `json:"ipsecRemoteAddrs" patchStrategy:"merge"`
 	IpsecRemoteTs    string              `json:"ipsecRemoteTs" patchStrategy:"merge"`

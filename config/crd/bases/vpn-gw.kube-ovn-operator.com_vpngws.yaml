@@ -895,10 +895,6 @@ spec:
               ip:
                 description: vpn gw static ip
                 type: string
-              ipsecCaSecret:
-                description: ipsec vpn root ca secret name, the secret should in the
-                  same namespace as the vpn gw
-                type: string
               ipsecRemoteAddrs:
                 description: remote ipsec vpn server ips
                 type: string
@@ -1926,8 +1922,6 @@ spec:
                 type: boolean
               ip:
                 type: string
-              ipsecCaSecret:
-                type: string
               ipsecRemoteAddrs:
                 type: string
               ipsecRemoteTs:
@@ -2009,7 +2003,6 @@ spec:
             - enableIpsecVpn
             - enableSslVpn
             - ip
-            - ipsecCaSecret
             - ipsecRemoteAddrs
             - ipsecRemoteTs
             - ipsecSecret
