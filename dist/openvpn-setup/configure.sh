@@ -28,8 +28,9 @@ cidr2net() {
     echo "${netOctets#.}"
 }
 
+# use cert-manager secrets and user defined dh secret
 /etc/openvpn/setup/copy-certs.sh
-# or
+# or generate certs with easyrsa
 # /etc/openvpn/setup/setup-certs.sh
 
 intAndIP="$(ip route get 8.8.8.8 | awk '/8.8.8.8/ {print $5 "-" $7}')"
@@ -75,5 +76,5 @@ sed 's|NETMASK|'"${NETMASK}"'|' -i /etc/openvpn/openvpn.conf
 sed 's|OVPN_K8S_SEARCH|'"${FORMATTED_SEARCH}"'|' -i /etc/openvpn/openvpn.conf
 
 #
-# RUN
+echo "Running openvpn with config .............."
 openvpn --config /etc/openvpn/openvpn.conf
