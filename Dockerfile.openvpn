@@ -1,21 +1,16 @@
-# Smallest base image
-#https://hub.docker.com/_/alpine/tags
+FROM ubuntu:22.04
 
-FROM alpine:3.17.3
-
-# Install needed packages
-
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
-
-RUN apk update && \
-    apk add openssl easy-rsa openvpn iptables tcpdump bash && \
-    rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install python3 hostname vim tree iproute2 inetutils-ping arping ncat iptables tcpdump ipset curl openssl easy-rsa openvpn dnsutils net-tools -y && \
+        rm -rf /var/lib/apt/lists/* && \
+        rm -rf /etc/localtime
 
 # Configure tun
 RUN mkdir -p /dev/net && \
      mknod /dev/net/tun c 10 200 
 
+RUN mkdir -p /etc/openvpn/setup /etc/openvpn/certs/pki/private /etc/openvpn/certs/pki/issued
 COPY dist/openvpn-setup /etc/openvpn/setup/
 RUN chmod +x /etc/openvpn/setup/*.sh
-RUN mkdir -p /etc/openvpn/certs
-

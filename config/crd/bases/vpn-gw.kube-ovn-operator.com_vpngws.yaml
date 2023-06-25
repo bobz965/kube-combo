@@ -16,23 +16,29 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.subnet
-      name: Subnet
-      type: string
     - jsonPath: .status.ip
       name: IP
       type: string
     - jsonPath: .status.publicIp
       name: PublicIP
       type: string
-    - jsonPath: .status.sslVpnGwEnable
-      name: SSLVPN
+    - jsonPath: .status.subnet
+      name: Subnet
       type: string
-    - jsonPath: .status.ovpnCipher
-      name: OvpnCipher
+    - jsonPath: .status.cpu
+      name: Cpu
       type: string
-    - jsonPath: .status.ipsecVpnGwEnable
-      name: IPSecVPN
+    - jsonPath: .status.memory
+      name: Mem
+      type: string
+    - jsonPath: .status.qoSBandwidth
+      name: QoS
+      type: string
+    - jsonPath: .status.enableSslVpn
+      name: EnableSsl
+      type: string
+    - jsonPath: .status.enableIpsecVpn
+      name: EnableIpsec
       type: string
     name: v1
     schema:
@@ -885,6 +891,10 @@ spec:
               cpu:
                 description: pod request limit cpu, memory 1 cpu at least 1G memory
                   at least
+                type: string
+              dhSecret:
+                description: ssl vpn dh secret name, the secret should in the same
+                  namespace as the vpn gw
                 type: string
               enableIpsecVpn:
                 description: vpn gw enable ipsec vpn
@@ -1916,6 +1926,8 @@ spec:
                 type: array
               cpu:
                 type: string
+              dhSecret:
+                type: string
               enableIpsecVpn:
                 type: boolean
               enableSslVpn:
@@ -2000,6 +2012,7 @@ spec:
                 type: array
             required:
             - cpu
+            - dhSecret
             - enableIpsecVpn
             - enableSslVpn
             - ip

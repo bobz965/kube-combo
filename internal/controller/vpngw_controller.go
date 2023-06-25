@@ -49,7 +49,8 @@ const (
 
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
-	SslSecretPath         = "/etc/openvpn/certs"
+	SslSecretPath         = "/etc/ovpn/certs"
+	DhSecretPath          = "/etc/ovpn/dh"
 	IpsecVpnSecretPath    = "/etc/ipsec/certs"
 	SslVpnStartUpCMD      = "/etc/openvpn/setup/configure.sh"
 	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
@@ -256,11 +257,17 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 		sslContainer := corev1.Container{
 			Name:  SslVpnServer,
 			Image: gw.Spec.SslVpnImage,
-			// mount x.509 secret
 			VolumeMounts: []corev1.VolumeMount{
+				// mount x.509 secret
 				{
 					Name:      gw.Spec.SslSecret,
 					MountPath: SslSecretPath,
+					ReadOnly:  true,
+				},
+				// mount openssl dhparams secret
+				{
+					Name:      gw.Spec.DhSecret,
+					MountPath: DhSecretPath,
 					ReadOnly:  true,
 				},
 			},
@@ -319,6 +326,17 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 			},
 		}
 		volumes = append(volumes, sslSecretVolume)
+		dhSecretVolume := corev1.Volume{
+			Name: gw.Spec.DhSecret,
+			// define secrect volume
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: gw.Spec.DhSecret,
+					Optional:   &[]bool{true}[0],
+				},
+			},
+		}
+		volumes = append(volumes, dhSecretVolume)
 		containers = append(containers, sslContainer)
 	}
 	if gw.Spec.EnableIpsecVpn {

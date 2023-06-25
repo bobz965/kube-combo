@@ -67,6 +67,9 @@ type VpnGwSpec struct {
 	// ssl vpn secret name, the secret should in the same namespace as the vpn gw
 	SslSecret string `json:"sslSecret,omitempty"`
 
+	// ssl vpn dh secret name, the secret should in the same namespace as the vpn gw
+	DhSecret string `json:"dhSecret,omitempty"`
+
 	// ovpn ssl vpn proto, udp or tcp, udp probably is better
 	OvpnCipher string `json:"ovpnCipher"`
 	OvpnProto  string `json:"ovpnProto"`
@@ -113,6 +116,7 @@ type VpnGwStatus struct {
 	Affinity         corev1.Affinity     `json:"affinity,omitempty" patchStrategy:"merge"`
 	EnableSslVpn     bool                `json:"enableSslVpn" patchStrategy:"merge"`
 	SslSecret        string              `json:"sslSecret"  patchStrategy:"merge"`
+	DhSecret         string              `json:"dhSecret"  patchStrategy:"merge"`
 	SslVpnImage      string              `json:"sslVpnImage" patchStrategy:"merge"`
 	OvpnCipher       string              `json:"ovpnCipher" patchStrategy:"merge"`
 	OvpnProto        string              `json:"ovpnProto" patchStrategy:"merge"`
@@ -132,12 +136,14 @@ type VpnGwStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:storageversion
-//+kubebuilder:printcolumn:name="Subnet",type=string,JSONPath=`.status.subnet`
 //+kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.ip`
 //+kubebuilder:printcolumn:name="PublicIP",type=string,JSONPath=`.status.publicIp`
-//+kubebuilder:printcolumn:name="SSLVPN",type=string,JSONPath=`.status.sslVpnGwEnable`
-// +kubebuilder:printcolumn:name="OvpnCipher",type=string,JSONPath=`.status.ovpnCipher`
-//+kubebuilder:printcolumn:name="IPSecVPN",type=string,JSONPath=`.status.ipsecVpnGwEnable`
+//+kubebuilder:printcolumn:name="Subnet",type=string,JSONPath=`.status.subnet`
+//+kubebuilder:printcolumn:name="Cpu",type=string,JSONPath=`.status.cpu`
+//+kubebuilder:printcolumn:name="Mem",type=string,JSONPath=`.status.memory`
+//+kubebuilder:printcolumn:name="QoS",type=string,JSONPath=`.status.qoSBandwidth`
+//+kubebuilder:printcolumn:name="EnableSsl",type=string,JSONPath=`.status.enableSslVpn`
+//+kubebuilder:printcolumn:name="EnableIpsec",type=string,JSONPath=`.status.enableIpsecVpn`
 
 // VpnGw is the Schema for the vpngws API
 type VpnGw struct {
