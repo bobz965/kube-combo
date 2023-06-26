@@ -1,0 +1,23 @@
+connections {
+{% for conn in connections %}
+    net-net {
+        local {
+            auth = pubkey
+            certs = tls.crt
+        }
+        remote {
+            auth = pubkey
+            id = "CN={{ conn.remoteCN }}"
+        }
+        remote_addrs = {{ conn.remoteCN }}
+        children {
+            net-net {
+                local_ts = {{ conn.localPrivateCidrs }}
+                remote_ts = {{ conn.remotePrivateCidrs }}
+                dpd_action = restart
+                start_action = trap
+            }
+        }
+    }
+{% endfor %}
+}

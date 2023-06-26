@@ -46,4 +46,4 @@ connections {
 }
 EOF
 
-swanctl --load-all
+/usr/sbin/swanctl --load-all

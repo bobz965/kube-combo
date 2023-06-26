@@ -38,18 +38,15 @@ type VpnGwSpec struct {
 	// 1Mbps bandwidth at least
 	QoSBandwidth string `json:"qosBandwidth"`
 
-	// vpn gw static ip
+	// vpn gw private vpc subnet static ip
 	Ip string `json:"ip"`
-	// vpn gw static public ip, floating ip or router lb ip
-	PublicIp string `json:"publicIp"`
+
 	// pod subnet
 	// the vpn gw server pod running inside in this pod
 	// user can access all pod in this subnet via vpn gw
 	// if use subnet lb vip in this subnet, so no need svc cidr in this case
 	// vpc subnet use as eth1
 	Subnet string `json:"subnet"`
-	// pubblic subnet use as eth0
-	PublicSubnet string `json:"publicSubnet"`
 
 	Replicas int32 `json:"replicas"`
 	// vpn gw pod node selector
@@ -91,11 +88,8 @@ type VpnGwSpec struct {
 	// ipsec vpn secret name, the secret should in the same namespace as the vpn gw
 	IpsecSecret string `json:"ipsecSecret,omitempty"`
 
-	// remote ipsec vpn server ips
-	IpsecRemoteAddrs string `json:"ipsecRemoteAddrs"`
-
-	// remote ipsec vpn server subnet cidrs
-	IpsecRemoteTs string `json:"ipsecRemoteTs"`
+	// ipsec vpn remote connections, inlude remote ip and subnet
+	IpsecConnections []string `json:"ipsecConnections,omitempty"`
 
 	// ipsec vpn server image, strongswan server
 	IpsecVpnImage string `json:"ipsecVpnImage"`
@@ -107,9 +101,7 @@ type VpnGwStatus struct {
 	Memory           string              `json:"memory" patchStrategy:"merge"`
 	QoSBandwidth     string              `json:"qosBandwidth" patchStrategy:"merge"`
 	Ip               string              `json:"ip" patchStrategy:"merge"`
-	PublicIp         string              `json:"publicIp" patchStrategy:"merge"`
 	Subnet           string              `json:"subnet" patchStrategy:"merge"`
-	PublicSubnet     string              `json:"publicSubnet" patchStrategy:"merge"`
 	Replicas         int32               `json:"replicas" patchStrategy:"merge"`
 	Selector         []string            `json:"selector,omitempty" patchStrategy:"merge"`
 	Tolerations      []corev1.Toleration `json:"tolerations,omitempty" patchStrategy:"merge"`
@@ -125,8 +117,7 @@ type VpnGwStatus struct {
 	EnableIpsecVpn   bool                `json:"enableIpsecVpn" patchStrategy:"merge"`
 	IpsecSecret      string              `json:"ipsecSecret"  patchStrategy:"merge"`
 	IpsecVpnImage    string              `json:"ipsecVpnImage" patchStrategy:"merge"`
-	IpsecRemoteAddrs string              `json:"ipsecRemoteAddrs" patchStrategy:"merge"`
-	IpsecRemoteTs    string              `json:"ipsecRemoteTs" patchStrategy:"merge"`
+	IpsecConnections []string            `json:"ipsecConnections,omitempty" patchStrategy:"merge"`
 
 	// Conditions store the status conditions of the vpn gw instances
 	// +operator-sdk:csv:customresourcedefinitions:type=status

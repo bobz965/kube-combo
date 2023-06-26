@@ -6,9 +6,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - apps
+  - vpn-gw.kube-ovn-operator.com
   resources:
-  - statefulsets
+  - ipsecconns
   verbs:
   - create
   - delete
@@ -20,25 +20,13 @@ rules:
 - apiGroups:
   - vpn-gw.kube-ovn-operator.com
   resources:
-  - vpngws
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - vpn-gw.kube-ovn-operator.com
-  resources:
-  - vpngws/finalizers
+  - ipsecconns/finalizers
   verbs:
   - update
 - apiGroups:
   - vpn-gw.kube-ovn-operator.com
   resources:
-  - vpngws/status
+  - ipsecconns/status
   verbs:
   - get
   - patch

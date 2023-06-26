@@ -903,14 +903,13 @@ spec:
                 description: vpn gw enable ssl vpn
                 type: boolean
               ip:
-                description: vpn gw static ip
+                description: vpn gw private vpc subnet static ip
                 type: string
-              ipsecRemoteAddrs:
-                description: remote ipsec vpn server ips
-                type: string
-              ipsecRemoteTs:
-                description: remote ipsec vpn server subnet cidrs
-                type: string
+              ipsecConnections:
+                description: ipsec vpn remote connections, inlude remote ip and subnet
+                items:
+                  type: string
+                type: array
               ipsecSecret:
                 description: ipsec vpn secret name, the secret should in the same
                   namespace as the vpn gw
@@ -930,12 +929,6 @@ spec:
                 type: string
               ovpnSubnetCidr:
                 description: ovpn ssl vpn clinet server subnet cidr 10.240.0.0/16
-                type: string
-              publicIp:
-                description: vpn gw static public ip, floating ip or router lb ip
-                type: string
-              publicSubnet:
-                description: pubblic subnet use as eth0
                 type: string
               qosBandwidth:
                 description: 1Mbps bandwidth at least
@@ -1008,16 +1001,12 @@ spec:
             - enableIpsecVpn
             - enableSslVpn
             - ip
-            - ipsecRemoteAddrs
-            - ipsecRemoteTs
             - ipsecVpnImage
             - memory
             - ovpnCipher
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
-            - publicIp
-            - publicSubnet
             - qosBandwidth
             - replicas
             - sslVpnImage
@@ -1934,10 +1923,10 @@ spec:
                 type: boolean
               ip:
                 type: string
-              ipsecRemoteAddrs:
-                type: string
-              ipsecRemoteTs:
-                type: string
+              ipsecConnections:
+                items:
+                  type: string
+                type: array
               ipsecSecret:
                 type: string
               ipsecVpnImage:
@@ -1951,10 +1940,6 @@ spec:
               ovpnProto:
                 type: string
               ovpnSubnetCidr:
-                type: string
-              publicIp:
-                type: string
-              publicSubnet:
                 type: string
               qosBandwidth:
                 type: string
@@ -2016,8 +2001,6 @@ spec:
             - enableIpsecVpn
             - enableSslVpn
             - ip
-            - ipsecRemoteAddrs
-            - ipsecRemoteTs
             - ipsecSecret
             - ipsecVpnImage
             - memory
@@ -2025,8 +2008,6 @@ spec:
             - ovpnPort
             - ovpnProto
             - ovpnSubnetCidr
-            - publicIp
-            - publicSubnet
             - qosBandwidth
             - replicas
             - sslSecret

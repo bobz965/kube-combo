@@ -1,0 +1,12 @@
+apiVersion: vpn-gw.kube-ovn-operator.com/v1
+kind: IpsecConn
+metadata:
+  labels:
+    app.kubernetes.io/name: ipsecconn
+    app.kubernetes.io/instance: ipsecconn-sample
+    app.kubernetes.io/part-of: vpn-gw
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: vpn-gw
+  name: ipsecconn-sample
+spec:
+  # TODO(user): Add fields here
