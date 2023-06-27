@@ -1,6 +1,6 @@
 connections {
 {% for conn in connections %}
-    net-net {
+    net-net-{{ conn.name }} {
         local {
             auth = pubkey
             certs = tls.crt
@@ -21,3 +21,4 @@ connections {
     }
 {% endfor %}
 }
+

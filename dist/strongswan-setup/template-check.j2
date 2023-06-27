@@ -1,0 +1,11 @@
+
+{% for conn in connections %}
+# --- check connection {{ conn.name }} remote public ip ---
+ping -n -c 4 {{ conn.remotePublicIp }} || true
+{% endfor %}
+
+swanctl --list-conns
+swanctl --list-sas
+swanctl --stats
+ip xfrm state
+ip xfrm policy

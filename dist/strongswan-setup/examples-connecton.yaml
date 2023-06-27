@@ -13,3 +13,4 @@ connections:
     remoteCN: mars-0.vpn.gw.com
     remotePublicIp: 192.168.7.33
     remotePrivateCidrs: 10.3.0.0/24
+
