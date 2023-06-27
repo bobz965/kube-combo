@@ -59,7 +59,7 @@ const (
 
 	SslVpnStartUpCMD           = "/etc/openvpn/setup/configure.sh"
 	IpsecVpnStartUpCMD         = "/usr/sbin/charon-systemd"
-	IpsecRefreshScriptTemplate = "/refresh-connection.sh %s"
+	IpsecRefreshScriptTemplate = "/refresh-connection.sh refresh %s"
 
 	EnableSslVpnLabel   = "enable-ssl-vpn"
 	EnableIpsecVpnLabel = "enable-ipsec-vpn"
