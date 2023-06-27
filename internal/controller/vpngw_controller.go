@@ -98,7 +98,7 @@ type VpnGwReconciler struct {
 	Log        logr.Logger
 	Scheme     *runtime.Scheme
 	Namespace  string
-	Handler    func(gw *vpngwv1.VpnGw, req ctrl.Request) SyncState
+	Handler    func(req ctrl.Request, gw *vpngwv1.VpnGw) SyncState
 	Reload     chan event.GenericEvent
 }
 
@@ -467,7 +467,7 @@ func labelsForVpnGw(gw *vpngwv1.VpnGw) map[string]string {
 	}
 }
 
-func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Request) SyncState {
+func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.VpnGw) SyncState {
 	// create vpn gw statefulset
 	namespacedName := req.NamespacedName.String()
 	r.Log.Info("start handleAddOrUpdateVpnGw", "vpn gw", namespacedName)
@@ -559,9 +559,9 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 			conns = append(conns, conn.Name)
 		}
 	}
-	gw = gw.DeepCopy()
-	if r.isChanged(gw, conns) {
-		err = r.Status().Update(context.Background(), gw)
+	newGw := gw.DeepCopy()
+	if r.isChanged(newGw, conns) {
+		err = r.Status().Update(context.Background(), newGw)
 		if err != nil {
 			r.Log.Error(err, "failed to update vpn gw after updating exist statefulset")
 			return SyncStateError
@@ -613,7 +613,7 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	r.Handler = r.handleAddOrUpdateVpnGw
 	// TODO:// Handler should set in main.go
 
-	res := r.Handler(gw, req)
+	res := r.Handler(req, gw)
 	switch res {
 	case SyncStateError:
 		updateErrors.Inc()
