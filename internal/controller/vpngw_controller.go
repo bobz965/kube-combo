@@ -39,9 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	vpngwv1 "github.com/bobz965/kube-ovn-operator/api/v1"
-	"github.com/bobz965/kube-ovn-operator/internal/util"
 
-	// "github.com/bobz965/kube-ovn-operator/internal/util"
 	// kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -522,6 +520,12 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 		// format ipsec connections
 		connections := ""
 		for _, v := range res {
+			if v.Spec.LocalCN == "" || v.Spec.LocalPublicIp == "" || v.Spec.LocalPrivateCidrs == "" ||
+				v.Spec.RemoteCN == "" || v.Spec.RemotePublicIp == "" || v.Spec.RemotePrivateCidrs == "" {
+				err := fmt.Errorf("invalid ipsec connection, exist empty spec: %+v", v)
+				r.Log.Error(err, "skip to refresh this vpn gw ipsec connection")
+				continue
+			}
 			connections += fmt.Sprintf("%s %s %s %s %s %s %s, ", v.Name, v.Spec.LocalCN, v.Spec.LocalPublicIp, v.Spec.LocalPrivateCidrs,
 				v.Spec.RemoteCN, v.Spec.RemotePublicIp, v.Spec.RemotePrivateCidrs)
 		}
@@ -539,7 +543,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 		// exec pod to run cmd to refresh ipsec connections
 		cmd := fmt.Sprintf("bash /refresh-connection %s", connections)
 		r.Log.Info(cmd)
-		stdOutput, errOutput, err := util.ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
+		stdOutput, errOutput, err := ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
 		if err != nil {
 			if len(errOutput) > 0 {
 				err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
@@ -566,13 +570,24 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 	return SyncStateSuccess
 }
 
+// Note: you need a blank line after this list in order for the controller to pick this up.
+
 // +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/finalizers,verbs=update
-// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/scale,verbs=get;watch;update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=get;list;watch
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;delete;deletecollection
+// +kubebuilder:rbac:groups=core,resources=pods/exec,verbs=create
+// +kubebuilder:rbac:groups=core,resources=pods/log,verbs=get
+// +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list
+
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 //
