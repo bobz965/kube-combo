@@ -83,30 +83,9 @@ func (r *IpsecConnReconciler) validateIpsecConnection(ipsecConn *vpngwv1.IpsecCo
 	return nil
 }
 
-// func (r *IpsecConnReconciler) isChanged(ipsecConn *vpngwv1.IpsecConn) bool {
-// 	changed := false
-// 	if ipsecConn.Status.VpnGw == "" && ipsecConn.Spec.VpnGw != "" {
-// 		ipsecConn.Status.VpnGw = ipsecConn.Spec.VpnGw
-// 		changed = true
-// 	}
-// 	if ipsecConn.Status.RemotePublicIp == "" && ipsecConn.Spec.RemotePublicIp != "" {
-// 		ipsecConn.Status.RemotePublicIp = ipsecConn.Spec.RemotePublicIp
-// 		changed = true
-// 	}
-// 	if ipsecConn.Status.RemotePrivateCidrs == "" && ipsecConn.Spec.RemotePrivateCidrs != "" {
-// 		ipsecConn.Status.RemotePrivateCidrs = ipsecConn.Spec.RemotePrivateCidrs
-// 		changed = true
-// 	}
-// 	if ipsecConn.Status.LocalPrivateCidrs == "" && ipsecConn.Spec.LocalPrivateCidrs != "" {
-// 		ipsecConn.Status.LocalPrivateCidrs = ipsecConn.Spec.LocalPrivateCidrs
-// 		changed = true
-// 	}
-// 	return changed
-// }
-
 func labelsForIpsecConnection(conn *vpngwv1.IpsecConn) map[string]string {
 	return map[string]string{
-		VpnGwLabel: conn.Name,
+		VpnGwLabel: conn.Spec.VpnGw,
 	}
 }
 
@@ -122,18 +101,16 @@ func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(ipsecConn *vpngwv
 		// invalid spec no retry
 		return SyncStateErrorNoRetry
 	}
-	// ipsecConn is just a database, no need to create any resource, so no need to diff its status
-	// newConn := ipsecConn.DeepCopy()
-	// if r.isChanged(newConn) {
-	// 	labels := labelsForIpsecConnection(newConn)
-	// 	newConn.SetLabels(labels)
-	// 	err := r.Update(context.Background(), newConn)
-	// 	if err != nil {
-	// 		r.Log.Error(err, "failed to update the ipsecConn")
-	// 		return SyncStateError
-	// 	}
-	// 	return SyncStateSuccess
-	// }
+
+	// patch lable so that vpn gw can find its ipsec conns
+	newConn := ipsecConn.DeepCopy()
+	labels := labelsForIpsecConnection(newConn)
+	newConn.SetLabels(labels)
+	err := r.Patch(context.Background(), newConn, client.MergeFrom(ipsecConn))
+	if err != nil {
+		r.Log.Error(err, "failed to update the ipsecConn")
+		return SyncStateError
+	}
 	return SyncStateSuccess
 }
 

@@ -108,6 +108,7 @@ func main() {
 	if err = (&controller.IpsecConnReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Log:    ctrl.Log.WithName("ipsecconn"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "IpsecConn")
 		os.Exit(1)

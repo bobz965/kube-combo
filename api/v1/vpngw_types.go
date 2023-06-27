@@ -127,14 +127,14 @@ type VpnGwStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:storageversion
-//+kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.ip`
-//+kubebuilder:printcolumn:name="PublicIP",type=string,JSONPath=`.status.publicIp`
-//+kubebuilder:printcolumn:name="Subnet",type=string,JSONPath=`.status.subnet`
-//+kubebuilder:printcolumn:name="Cpu",type=string,JSONPath=`.status.cpu`
-//+kubebuilder:printcolumn:name="Mem",type=string,JSONPath=`.status.memory`
-//+kubebuilder:printcolumn:name="QoS",type=string,JSONPath=`.status.qoSBandwidth`
-//+kubebuilder:printcolumn:name="EnableSsl",type=string,JSONPath=`.status.enableSslVpn`
-//+kubebuilder:printcolumn:name="EnableIpsec",type=string,JSONPath=`.status.enableIpsecVpn`
+//+kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.spec.ip`
+//+kubebuilder:printcolumn:name="PublicIP",type=string,JSONPath=`.spec.publicIp`
+//+kubebuilder:printcolumn:name="Subnet",type=string,JSONPath=`.spec.subnet`
+//+kubebuilder:printcolumn:name="Cpu",type=string,JSONPath=`.spec.cpu`
+//+kubebuilder:printcolumn:name="Mem",type=string,JSONPath=`.spec.memory`
+//+kubebuilder:printcolumn:name="QoS",type=string,JSONPath=`.spec.qoSBandwidth`
+//+kubebuilder:printcolumn:name="EnableSsl",type=string,JSONPath=`.spec.enableSslVpn`
+//+kubebuilder:printcolumn:name="EnableIpsec",type=string,JSONPath=`.spec.enableIpsecVpn`
 
 // VpnGw is the Schema for the vpngws API
 type VpnGw struct {

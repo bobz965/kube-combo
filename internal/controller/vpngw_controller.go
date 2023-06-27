@@ -52,13 +52,14 @@ const (
 
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
-	SslSecretPath         = "/etc/ovpn/certs"
-	DhSecretPath          = "/etc/ovpn/dh"
-	IpsecVpnSecretPath    = "/etc/ipsec/certs"
-	SslVpnStartUpCMD      = "/etc/openvpn/setup/configure.sh"
-	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
-	IpsecVpnStartUpCMD = "/usr/sbin/charon-systemd"
-	// IpsecVpnReloadCMD  = "/usr/sbin/swanctl --load-all --noprompt"
+
+	SslSecretPath      = "/etc/ovpn/certs"
+	DhSecretPath       = "/etc/ovpn/dh"
+	IpsecVpnSecretPath = "/etc/ipsec/certs"
+
+	SslVpnStartUpCMD           = "/etc/openvpn/setup/configure.sh"
+	IpsecVpnStartUpCMD         = "/usr/sbin/charon-systemd"
+	IpsecRefreshScriptTemplate = "/refresh-connection.sh %s"
 
 	EnableSslVpnLabel   = "enable-ssl-vpn"
 	EnableIpsecVpnLabel = "enable-ipsec-vpn"
@@ -529,34 +530,36 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 			connections += fmt.Sprintf("%s %s %s %s %s %s %s, ", v.Name, v.Spec.LocalCN, v.Spec.LocalPublicIp, v.Spec.LocalPrivateCidrs,
 				v.Spec.RemoteCN, v.Spec.RemotePublicIp, v.Spec.RemotePrivateCidrs)
 		}
-		// refresh ipsec connections by exec pod
-		// get pod from statefulset
-		pod := &corev1.Pod{}
-		err = r.Get(context.Background(), types.NamespacedName{
-			Name:      gw.Name + "-0",
-			Namespace: gw.Namespace,
-		}, pod)
-		if err != nil {
-			r.Log.Error(err, "failed to get vpn gw pod")
-			return SyncStateError
-		}
-		// exec pod to run cmd to refresh ipsec connections
-		cmd := fmt.Sprintf("bash /refresh-connection %s", connections)
-		r.Log.Info(cmd)
-		stdOutput, errOutput, err := ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
-		if err != nil {
-			if len(errOutput) > 0 {
-				err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
-				r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
+		if connections != "" {
+			// exec pod to run cmd to refresh ipsec connections
+			cmd := fmt.Sprintf(IpsecRefreshScriptTemplate, connections)
+			r.Log.Info("run script", "cmd", cmd)
+			// get pod from statefulset
+			pod := &corev1.Pod{}
+			err = r.Get(context.Background(), types.NamespacedName{
+				Name:      gw.Name + "-0",
+				Namespace: gw.Namespace,
+			}, pod)
+			if err != nil {
+				r.Log.Error(err, "failed to get vpn gw pod")
+				return SyncStateError
 			}
-			if len(stdOutput) > 0 {
-				r.Log.Info("failed to ExecuteCommandInContainer, stdOutput: %v", stdOutput)
+			// refresh ipsec connections by exec pod
+			stdOutput, errOutput, err := ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
+			if err != nil {
+				if len(errOutput) > 0 {
+					err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
+					r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
+				}
+				if len(stdOutput) > 0 {
+					err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
+					r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
+				}
+				return SyncStateError
 			}
-			return SyncStateError
-		}
-
-		for _, conn := range res {
-			conns = append(conns, conn.Name)
+			for _, conn := range res {
+				conns = append(conns, conn.Name)
+			}
 		}
 	}
 	newGw := gw.DeepCopy()
