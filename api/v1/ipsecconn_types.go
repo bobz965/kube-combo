@@ -41,44 +41,45 @@ type IpsecConnSpec struct {
 	RemotePrivateCidrs string `json:"remotePrivateCidrs"`
 }
 
-// IpsecConnStatus defines the observed state of IpsecConn
-type IpsecConnStatus struct {
-	// ipsec connection belong to which vpn gw, will trigger vpn gw reconcile its ipsec connections
-	VpnGw string `json:"vpnGw"`
+// // IpsecConnStatus defines the observed state of IpsecConn
+// type IpsecConnStatus struct {
+// 	// ipsec connection belong to which vpn gw, will trigger vpn gw reconcile its ipsec connections
+// 	VpnGw string `json:"vpnGw"`
 
-	// CN is defined in x509 certificate
-	LocalCN string `json:"localCN"`
-	// current public ipsec vpn gw ip
-	LocalPublicIp     string `json:"localPublicIp"`
-	LocalPrivateCidrs string `json:"localPrivateCidrs"`
+// 	// CN is defined in x509 certificate
+// 	LocalCN string `json:"localCN"`
+// 	// current public ipsec vpn gw ip
+// 	LocalPublicIp     string `json:"localPublicIp"`
+// 	LocalPrivateCidrs string `json:"localPrivateCidrs"`
 
-	RemoteCN string `json:"remoteCN"`
-	// remote public ipsec vpn gw ip
-	RemotePublicIp     string `json:"remotePublicIp"`
-	RemotePrivateCidrs string `json:"remotePrivateCidrs"`
+// 	RemoteCN string `json:"remoteCN"`
+// 	// remote public ipsec vpn gw ip
+// 	RemotePublicIp     string `json:"remotePublicIp"`
+// 	RemotePrivateCidrs string `json:"remotePrivateCidrs"`
 
-	// Conditions store the status conditions of the ipsec connection instances
-	// +operator-sdk:csv:customresourcedefinitions:type=status
-	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-}
+// 	// Conditions store the status conditions of the ipsec connection instances
+// 	// +operator-sdk:csv:customresourcedefinitions:type=status
+// 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+// }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+// // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
-// +kubebuilder:printcolumn:name="VpnGw",type=string,JSONPath=`.status.vpnGw`
-// +kubebuilder:printcolumn:name="LocalPublicIp",type=string,JSONPath=`.status.localPublicIp`
-// +kubebuilder:printcolumn:name="RemotePublicIp",type=string,JSONPath=`.status.remotePublicIp`
-// +kubebuilder:printcolumn:name="LocalPrivateCidrs",type=string,JSONPath=`.status.localPrivateCidrs`
-// +kubebuilder:printcolumn:name="RemotePrivateCidrs",type=string,JSONPath=`.status.remotePrivateCidrs`
-// +kubebuilder:printcolumn:name="LocalCN",type=string,JSONPath=`.status.localCN`
-// +kubebuilder:printcolumn:name="RemoteCN",type=string,JSONPath=`.status.remoteCN`
+// +kubebuilder:printcolumn:name="VpnGw",type=string,JSONPath=`.spec.vpnGw`
+// +kubebuilder:printcolumn:name="LocalPublicIp",type=string,JSONPath=`.spec.localPublicIp`
+// +kubebuilder:printcolumn:name="RemotePublicIp",type=string,JSONPath=`.spec.remotePublicIp`
+// +kubebuilder:printcolumn:name="LocalPrivateCidrs",type=string,JSONPath=`.spec.localPrivateCidrs`
+// +kubebuilder:printcolumn:name="RemotePrivateCidrs",type=string,JSONPath=`.spec.remotePrivateCidrs`
+// +kubebuilder:printcolumn:name="LocalCN",type=string,JSONPath=`.spec.localCN`
+// +kubebuilder:printcolumn:name="RemoteCN",type=string,JSONPath=`.spec.remoteCN`
+
 // IpsecConn is the Schema for the ipsecconns API
 type IpsecConn struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   IpsecConnSpec   `json:"spec,omitempty"`
-	Status IpsecConnStatus `json:"status,omitempty"`
+	Spec IpsecConnSpec `json:"spec,omitempty"`
+	// Status IpsecConnStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
