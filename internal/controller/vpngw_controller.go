@@ -57,9 +57,9 @@ const (
 	DhSecretPath       = "/etc/ovpn/dh"
 	IpsecVpnSecretPath = "/etc/ipsec/certs"
 
-	SslVpnStartUpCMD           = "/etc/openvpn/setup/configure.sh"
-	IpsecVpnStartUpCMD         = "/usr/sbin/charon-systemd"
-	IpsecRefreshScriptTemplate = "/refresh-connection.sh refresh %s"
+	SslVpnStartUpCMD               = "/etc/openvpn/setup/configure.sh"
+	IpsecVpnStartUpCMD             = "/usr/sbin/charon-systemd"
+	IpsecConnectionRefreshTemplate = "/connection.sh refresh %s"
 
 	EnableSslVpnLabel   = "enable-ssl-vpn"
 	EnableIpsecVpnLabel = "enable-ipsec-vpn"
@@ -532,7 +532,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 		}
 		if connections != "" {
 			// exec pod to run cmd to refresh ipsec connections
-			cmd := fmt.Sprintf(IpsecRefreshScriptTemplate, connections)
+			cmd := fmt.Sprintf(IpsecConnectionRefreshTemplate, connections)
 			r.Log.Info("run script", "cmd", cmd)
 			// get pod from statefulset
 			pod := &corev1.Pod{}
