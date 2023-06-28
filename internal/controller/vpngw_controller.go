@@ -470,7 +470,7 @@ func labelsForVpnGw(gw *vpngwv1.VpnGw) map[string]string {
 	}
 }
 
-func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.VpnGw) SyncState {
+func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.VpnGw) (SyncState, error) {
 	// create vpn gw statefulset
 	namespacedName := req.NamespacedName.String()
 	r.Log.Info("start handleAddOrUpdateVpnGw", "vpn gw", namespacedName)
@@ -480,7 +480,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 	if err := r.validateVpnGw(gw, namespacedName); err != nil {
 		r.Log.Error(err, "failed to validate vpn gw")
 		// invalid spec no retry
-		return SyncStateErrorNoRetry
+		return SyncStateErrorNoRetry, err
 	}
 
 	// create or update statefulset
@@ -492,7 +492,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 			needToCreate = true
 		} else {
 			r.Log.Error(err, "failed to get old statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
 	}
 	newGw := gw.DeepCopy()
@@ -501,7 +501,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 		err = r.Create(context.Background(), newSts)
 		if err != nil {
 			r.Log.Error(err, "failed to create the new statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
 		time.Sleep(5 * time.Second)
 	} else if r.isChanged(newGw, nil) {
@@ -510,7 +510,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 		err = r.Update(context.Background(), newSts)
 		if err != nil {
 			r.Log.Error(err, "failed to update the statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -520,7 +520,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 		res, err := r.getIpsecConnections(context.Background(), gw)
 		if err != nil {
 			r.Log.Error(err, "failed to list vpn gw ipsec connections")
-			return SyncStateError
+			return SyncStateError, err
 		}
 		// format ipsec connections
 		connections := ""
@@ -544,19 +544,18 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 
 			if err != nil {
 				r.Log.Error(err, "failed to get vpn gw pod")
-				time.Sleep(1 * time.Second)
-				return SyncStateError
+				// time.Sleep(1 * time.Second)
+				return SyncStateError, err
 			} else if pod.Status.Phase != "Running" {
 				err = fmt.Errorf("pod is not running now")
 				r.Log.Error(err, "wait a while to refresh vpn gw ipsec connections")
-				time.Sleep(5 * time.Second)
-				return SyncStateError
+				// time.Sleep(5 * time.Second)
+				return SyncStateError, err
 			}
 			r.Log.Info("found vpn gw pod", "pod", pod.Name)
 			// exec pod to run cmd to refresh ipsec connections
 			cmd := fmt.Sprintf(IpsecConnectionRefreshTemplate, connections)
 			r.Log.Info("start run cmd", "cmd", cmd)
-			defer r.Log.Info("end run cmd", "cmd", cmd, "err", err)
 			// refresh ipsec connections by exec pod
 			stdOutput, errOutput, err := ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
 			if err != nil {
@@ -568,8 +567,8 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 					err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
 					r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
 				}
-				time.Sleep(5 * time.Second)
-				return SyncStateError
+				// time.Sleep(5 * time.Second)
+				return SyncStateError, err
 			}
 			for _, conn := range res {
 				conns = append(conns, conn.Name)
@@ -581,10 +580,10 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 		err = r.Status().Update(context.Background(), newGw)
 		if err != nil {
 			r.Log.Error(err, "failed to update vpn gw after updating exist statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
 	}
-	return SyncStateSuccess
+	return SyncStateSuccess, nil
 }
 
 // Note: you need a blank line after this list in order for the controller to pick this up.
@@ -627,12 +626,12 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, nil
 	}
 
-	res := r.handleAddOrUpdateVpnGw(req, gw)
+	res, err := r.handleAddOrUpdateVpnGw(req, gw)
 	switch res {
 	case SyncStateError:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
-		return ctrl.Result{RequeueAfter: 1 * time.Second}, errRetry
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, errRetry
 	case SyncStateErrorNoRetry:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
