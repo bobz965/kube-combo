@@ -2,11 +2,11 @@ connections {
 {% for conn in connections %}
     net-net-{{ conn.name }} {
         local {
-            auth = pubkey
+            auth = {{ conn.auth }}
             certs = tls.crt
         }
         remote {
-            auth = pubkey
+            auth = {{ conn.auth }}
             id = "CN={{ conn.remoteCN }}"
         }
         remote_addrs = {{ conn.remoteCN }}
@@ -18,6 +18,8 @@ connections {
                 start_action = trap
             }
         }
+        version = {{ conn.ikeVersion }}
+        proposals = {{ conn.proposals }}
     }
 {% endfor %}
 }

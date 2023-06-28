@@ -41,14 +41,20 @@ function refresh() {
         # echo "show connection: ${connection}"
         IFS=' ' read -r -a conn <<< "${connection}"
         name=${conn[0]}
-        localCN=${conn[1]}
-        localPublicIp=${conn[2]}
-        localPrivateCidrs=${conn[3]}
-        remoteCN=${conn[4]}
-        remotePublicIp=${conn[5]}
-        remotePrivateCidrs=${conn[6]}
+        auth=${conn[1]}
+        ikeVersion=${conn[2]}
+        proposal=${conn[3]}
+        localCN=${conn[4]}
+        localPublicIp=${conn[5]}
+        localPrivateCidrs=${conn[6]}
+        remoteCN=${conn[7]}
+        remotePublicIp=${conn[8]}
+        remotePrivateCidrs=${conn[9]}
         { 
         printf "  - name: %s\n" "${name}"
+        printf "    auth: %s\n" "${auth}"
+        printf "    ikeVersion: %s\n" "${ikeVersion}"
+        printf "    proposal: %s\n" "${proposal}"
         printf "    localCN: %s\n" "${localCN}"
         printf "    localPublicIp: %s\n" "${localPublicIp}"
         printf "    localPrivateCidrs: %s\n" "${localPrivateCidrs}"

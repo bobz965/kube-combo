@@ -525,13 +525,19 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 		// format ipsec connections
 		connections := ""
 		for _, v := range res {
-			if v.Spec.LocalCN == "" || v.Spec.LocalPublicIp == "" || v.Spec.LocalPrivateCidrs == "" ||
-				v.Spec.RemoteCN == "" || v.Spec.RemotePublicIp == "" || v.Spec.RemotePrivateCidrs == "" {
-				err := fmt.Errorf("invalid ipsec connection, exist empty spec: %+v", v)
+			if v.Spec.VpnGw == "" || v.Spec.VpnGw != gw.Name {
+				err := fmt.Errorf("ipsec connection spec vpn gw is invalid, spec vpn gw: %s", v.Spec.VpnGw)
 				r.Log.Error(err, "ignore invalid ipsec connection")
 				continue
 			}
-			connections += fmt.Sprintf("%s %s %s %s %s %s %s, ", v.Name, v.Spec.LocalCN, v.Spec.LocalPublicIp, v.Spec.LocalPrivateCidrs,
+			if v.Spec.Auth == "" || v.Spec.IkeVersion == "" || v.Spec.Proposals == "" ||
+				v.Spec.LocalCN == "" || v.Spec.LocalPublicIp == "" || v.Spec.LocalPrivateCidrs == "" ||
+				v.Spec.RemoteCN == "" || v.Spec.RemotePublicIp == "" || v.Spec.RemotePrivateCidrs == "" {
+				err := fmt.Errorf("invalid ipsec connection, exist empty spec: %+v", v)
+				r.Log.Error(err, "ignore invalid ipsec connection")
+			}
+			connections += fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s,", v.Name, v.Spec.Auth, v.Spec.IkeVersion, v.Spec.Proposals,
+				v.Spec.LocalCN, v.Spec.LocalPublicIp, v.Spec.LocalPrivateCidrs,
 				v.Spec.RemoteCN, v.Spec.RemotePublicIp, v.Spec.RemotePrivateCidrs)
 		}
 		if connections != "" {
