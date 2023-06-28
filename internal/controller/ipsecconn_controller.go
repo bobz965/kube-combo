@@ -44,7 +44,6 @@ type IpsecConnReconciler struct {
 	Log       logr.Logger
 	Scheme    *runtime.Scheme
 	Namespace string
-	Handler   func(ipsecConn *vpngwv1.IpsecConn, req ctrl.Request) SyncState
 	Reload    chan event.GenericEvent
 }
 
@@ -89,7 +88,7 @@ func labelsForIpsecConnection(conn *vpngwv1.IpsecConn) map[string]string {
 	}
 }
 
-func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(ipsecConn *vpngwv1.IpsecConn, req ctrl.Request) SyncState {
+func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(req ctrl.Request, ipsecConn *vpngwv1.IpsecConn) SyncState {
 	// create ipsecConn statefulset
 	namespacedName := req.NamespacedName.String()
 	r.Log.Info("start handleAddOrUpdateIpsecConnection", "ipsecConn", namespacedName)
@@ -143,12 +142,8 @@ func (r *IpsecConnReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// onwner reference will trigger vpn gw update ipsec connections
 		return ctrl.Result{}, nil
 	}
-
-	r.Handler = r.handleAddOrUpdateIpsecConnection
-	// TODO:// Handler should set in main.go
-
 	// update vpn gw spec
-	res := r.Handler(ipsecConn, req)
+	res := r.handleAddOrUpdateIpsecConnection(req, ipsecConn)
 	switch res {
 	case SyncStateError:
 		updateErrors.Inc()

@@ -100,7 +100,6 @@ type VpnGwReconciler struct {
 	Log        logr.Logger
 	Scheme     *runtime.Scheme
 	Namespace  string
-	Handler    func(req ctrl.Request, gw *vpngwv1.VpnGw) SyncState
 	Reload     chan event.GenericEvent
 }
 
@@ -213,9 +212,11 @@ func (r *VpnGwReconciler) isChanged(gw *vpngwv1.VpnGw, ipsecConnections []string
 		gw.Status.EnableIpsecVpn = gw.Spec.EnableIpsecVpn
 		if gw.Status.IpsecVpnImage != gw.Spec.IpsecVpnImage {
 			gw.Status.IpsecVpnImage = gw.Spec.IpsecVpnImage
-
 		}
+		changed = true
+	}
 
+	if gw.Status.EnableIpsecVpn && ipsecConnections != nil {
 		if !reflect.DeepEqual(gw.Spec.IpsecConnections, ipsecConnections) {
 			gw.Spec.IpsecConnections = ipsecConnections
 			gw.Status.IpsecConnections = ipsecConnections
@@ -484,18 +485,17 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 
 	// create or update statefulset
 	needToCreate := false
-	needToUpdate := true
 	oldSts := &appsv1.StatefulSet{}
 	err := r.Get(context.Background(), req.NamespacedName, oldSts)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			needToCreate = true
-			needToUpdate = false
 		} else {
 			r.Log.Error(err, "failed to get old statefulset")
 			return SyncStateError
 		}
 	}
+	newGw := gw.DeepCopy()
 	if needToCreate {
 		newSts := r.statefulSetForVpnGw(gw, nil)
 		err = r.Create(context.Background(), newSts)
@@ -503,13 +503,16 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 			r.Log.Error(err, "failed to create the new statefulset")
 			return SyncStateError
 		}
-	} else if needToUpdate {
+		time.Sleep(5 * time.Second)
+	} else if r.isChanged(newGw, nil) {
+		// update statefulset
 		newSts := r.statefulSetForVpnGw(gw, oldSts.DeepCopy())
 		err = r.Update(context.Background(), newSts)
 		if err != nil {
 			r.Log.Error(err, "failed to update the statefulset")
 			return SyncStateError
 		}
+		time.Sleep(5 * time.Second)
 	}
 	var conns []string
 	if gw.Spec.EnableIpsecVpn {
@@ -532,9 +535,6 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 				v.Spec.RemoteCN, v.Spec.RemotePublicIp, v.Spec.RemotePrivateCidrs)
 		}
 		if connections != "" {
-			// exec pod to run cmd to refresh ipsec connections
-			cmd := fmt.Sprintf(IpsecConnectionRefreshTemplate, connections)
-			r.Log.Info("run script", "cmd", cmd)
 			// get pod from statefulset
 			pod := &corev1.Pod{}
 			err = r.Get(context.Background(), types.NamespacedName{
@@ -552,7 +552,11 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 				time.Sleep(5 * time.Second)
 				return SyncStateError
 			}
-			r.Log.Info("exist vpn gw pod", "pod", pod.Name)
+			r.Log.Info("found vpn gw pod", "pod", pod.Name)
+			// exec pod to run cmd to refresh ipsec connections
+			cmd := fmt.Sprintf(IpsecConnectionRefreshTemplate, connections)
+			r.Log.Info("start run cmd", "cmd", cmd)
+			defer r.Log.Info("end run cmd", "cmd", cmd, "err", err)
 			// refresh ipsec connections by exec pod
 			stdOutput, errOutput, err := ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
 			if err != nil {
@@ -564,6 +568,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 					err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
 					r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
 				}
+				time.Sleep(5 * time.Second)
 				return SyncStateError
 			}
 			for _, conn := range res {
@@ -571,7 +576,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 			}
 		}
 	}
-	newGw := gw.DeepCopy()
+	newGw = gw.DeepCopy()
 	if r.isChanged(newGw, conns) {
 		err = r.Status().Update(context.Background(), newGw)
 		if err != nil {
@@ -622,10 +627,7 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, nil
 	}
 
-	r.Handler = r.handleAddOrUpdateVpnGw
-	// TODO:// Handler should set in main.go
-
-	res := r.Handler(req, gw)
+	res := r.handleAddOrUpdateVpnGw(req, gw)
 	switch res {
 	case SyncStateError:
 		updateErrors.Inc()
