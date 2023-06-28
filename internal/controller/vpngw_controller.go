@@ -525,7 +525,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 			if v.Spec.LocalCN == "" || v.Spec.LocalPublicIp == "" || v.Spec.LocalPrivateCidrs == "" ||
 				v.Spec.RemoteCN == "" || v.Spec.RemotePublicIp == "" || v.Spec.RemotePrivateCidrs == "" {
 				err := fmt.Errorf("invalid ipsec connection, exist empty spec: %+v", v)
-				r.Log.Error(err, "skip to refresh this vpn gw ipsec connection")
+				r.Log.Error(err, "ignore invalid ipsec connection")
 				continue
 			}
 			connections += fmt.Sprintf("%s %s %s %s %s %s %s, ", v.Name, v.Spec.LocalCN, v.Spec.LocalPublicIp, v.Spec.LocalPrivateCidrs,
@@ -541,10 +541,18 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 				Name:      gw.Name + "-0",
 				Namespace: gw.Namespace,
 			}, pod)
+
 			if err != nil {
 				r.Log.Error(err, "failed to get vpn gw pod")
+				time.Sleep(1 * time.Second)
+				return SyncStateError
+			} else if pod.Status.Phase != "Running" {
+				err = fmt.Errorf("pod is not running now")
+				r.Log.Error(err, "wait a while to refresh vpn gw ipsec connections")
+				time.Sleep(5 * time.Second)
 				return SyncStateError
 			}
+			r.Log.Info("exist vpn gw pod", "pod", pod.Name)
 			// refresh ipsec connections by exec pod
 			stdOutput, errOutput, err := ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
 			if err != nil {
@@ -622,7 +630,7 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	case SyncStateError:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
-		return ctrl.Result{RequeueAfter: time.Second * 2}, errRetry
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, errRetry
 	case SyncStateErrorNoRetry:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")

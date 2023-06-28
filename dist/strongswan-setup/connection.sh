@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CONF=/etc/swanctl/swanctl.conf
-CONNECTION_YAML=connection.yaml
+CONNECTIONS_YAML=connections.yaml
 HOSTS=/etc/hosts
 TEMPLATE_HOSTS=template-hosts.j2
 TEMPLATE_SWANCTL_CONF=template-swanctl.conf.j2
@@ -34,7 +34,7 @@ function refresh() {
     init
     # 2. refresh connections
     # format connections into connection.yaml
-    printf "connections: \n" > $CONNECTION_YAML
+    printf "connections: \n" > $CONNECTIONS_YAML
     IFS=',' read -r -a array <<< "${connections}"
     for connection in "${array[@]}"
     do
@@ -55,13 +55,13 @@ function refresh() {
         printf "    remoteCN: %s\n" "${remoteCN}"
         printf "    remotePublicIp: %s\n" "${remotePublicIp}"
         printf "    remotePrivateCidrs: %s\n" "${remotePrivateCidrs}"
-        } >> $CONNECTION_YAML
+        } >> $CONNECTIONS_YAML
     done
     # 3. generate hosts and swanctl.conf
     # use j2 to generate hosts and swanctl.conf
-    j2 hosts.j2 $CONNECTION_YAML -o $HOSTS
-    j2 swanctl.conf.j2 $CONNECTION_YAML -o $CONF
-    j2 $TEMPLATE_CHECK $CONNECTION_YAML -o $CHECK_SCRIPT
+    j2 hosts.j2 $CONNECTIONS_YAML -o $HOSTS
+    j2 swanctl.conf.j2 $CONNECTIONS_YAML -o $CONF
+    j2 $TEMPLATE_CHECK $CONNECTIONS_YAML -o $CHECK_SCRIPT
     chmod +x $CHECK_SCRIPT
 
     # 4. reload strongswan connections
