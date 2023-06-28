@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -621,7 +622,7 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	case SyncStateError:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
-		return ctrl.Result{}, errRetry
+		return ctrl.Result{RequeueAfter: time.Second * 2}, errRetry
 	case SyncStateErrorNoRetry:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
