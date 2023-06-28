@@ -41,29 +41,7 @@ type IpsecConnSpec struct {
 	RemotePrivateCidrs string `json:"remotePrivateCidrs"`
 }
 
-// // IpsecConnStatus defines the observed state of IpsecConn
-// type IpsecConnStatus struct {
-// 	// ipsec connection belong to which vpn gw, will trigger vpn gw reconcile its ipsec connections
-// 	VpnGw string `json:"vpnGw"`
-
-// 	// CN is defined in x509 certificate
-// 	LocalCN string `json:"localCN"`
-// 	// current public ipsec vpn gw ip
-// 	LocalPublicIp     string `json:"localPublicIp"`
-// 	LocalPrivateCidrs string `json:"localPrivateCidrs"`
-
-// 	RemoteCN string `json:"remoteCN"`
-// 	// remote public ipsec vpn gw ip
-// 	RemotePublicIp     string `json:"remotePublicIp"`
-// 	RemotePrivateCidrs string `json:"remotePrivateCidrs"`
-
-// 	// Conditions store the status conditions of the ipsec connection instances
-// 	// +operator-sdk:csv:customresourcedefinitions:type=status
-// 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-// }
-
 // +kubebuilder:object:root=true
-// // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="VpnGw",type=string,JSONPath=`.spec.vpnGw`
 // +kubebuilder:printcolumn:name="LocalPublicIp",type=string,JSONPath=`.spec.localPublicIp`
