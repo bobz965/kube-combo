@@ -54,7 +54,7 @@ function refresh() {
         printf "  - name: %s\n" "${name}"
         printf "    auth: %s\n" "${auth}"
         printf "    ikeVersion: %s\n" "${ikeVersion}"
-        printf "    proposal: %s\n" "${proposal}"
+        printf "    proposals: %s\n" "${proposal}"
         printf "    localCN: %s\n" "${localCN}"
         printf "    localPublicIp: %s\n" "${localPublicIp}"
         printf "    localPrivateCidrs: %s\n" "${localPrivateCidrs}"
