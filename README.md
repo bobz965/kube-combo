@@ -177,3 +177,14 @@ kubectl get crd | grep cert-manager.io
 
 
 ```
+
+### 5. 通用性
+
+目前 vpn gw pod 只需要一个 IP，所以只需要保证固定内网 IP 是符合 k8s 通用规范即可保证能够适用于其他 CNI。
+该 IP 对应的 nat， 以及如何公网互联的路由和该功能是完全解耦的。
+
+各大公有云都是 sdn 网络，支持在 k8s 托管， 基于该 vpn gw operator 互相打通，比起申请虚拟机资源部署的方式应该更节省成本。
+
+### 6. 参考
+
+- [一个简单的 ipsec vpn 在公有云部署的项目就可以有 23k 的 star](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/README-zh.md#%E4%B8%8B%E4%B8%80%E6%AD%A5)

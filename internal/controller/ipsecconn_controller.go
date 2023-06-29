@@ -98,7 +98,7 @@ func labelsForIpsecConnection(conn *vpngwv1.IpsecConn) map[string]string {
 	}
 }
 
-func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(req ctrl.Request, ipsecConn *vpngwv1.IpsecConn) SyncState {
+func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(req ctrl.Request, ipsecConn *vpngwv1.IpsecConn) (SyncState, error) {
 	// create ipsecConn statefulset
 	namespacedName := req.NamespacedName.String()
 	r.Log.Info("start handleAddOrUpdateIpsecConnection", "ipsecConn", namespacedName)
@@ -108,7 +108,7 @@ func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(req ctrl.Request,
 	if err := r.validateIpsecConnection(ipsecConn, namespacedName); err != nil {
 		r.Log.Error(err, "failed to validate ipsecConn")
 		// invalid spec no retry
-		return SyncStateErrorNoRetry
+		return SyncStateErrorNoRetry, err
 	}
 
 	// patch lable so that vpn gw can find its ipsec conns
@@ -118,9 +118,9 @@ func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(req ctrl.Request,
 	err := r.Patch(context.Background(), newConn, client.MergeFrom(ipsecConn))
 	if err != nil {
 		r.Log.Error(err, "failed to update the ipsecConn")
-		return SyncStateError
+		return SyncStateError, err
 	}
-	return SyncStateSuccess
+	return SyncStateSuccess, err
 }
 
 //+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns,verbs=get;list;watch;create;update;patch;delete
@@ -153,7 +153,7 @@ func (r *IpsecConnReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 	// update vpn gw spec
-	res := r.handleAddOrUpdateIpsecConnection(req, ipsecConn)
+	res, err := r.handleAddOrUpdateIpsecConnection(req, ipsecConn)
 	switch res {
 	case SyncStateError:
 		updateErrors.Inc()
