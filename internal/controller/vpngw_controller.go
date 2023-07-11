@@ -104,6 +104,18 @@ type VpnGwReconciler struct {
 }
 
 func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string) error {
+	if gw.Spec.Cpu == "" || gw.Spec.Memory == "" {
+		err := fmt.Errorf("vpn gw cpu and memory is required")
+		r.Log.Error(err, "should set cpu and memory")
+		return err
+	}
+
+	if gw.Spec.QoSBandwidth == "" || gw.Spec.QoSBandwidth == "0" {
+		err := fmt.Errorf("vpn gw qos bandwidth is required")
+		r.Log.Error(err, "should set qos bandwidth")
+		return err
+	}
+
 	if gw.Spec.Subnet == "" {
 		err := fmt.Errorf("vpn gw subnet is required")
 		r.Log.Error(err, "should set subnet")
@@ -127,7 +139,23 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 		return err
 	}
 
+	if !gw.Spec.EnableSslVpn && !gw.Spec.EnableIpsecVpn {
+		err := fmt.Errorf("either ssl vpn or ipsec vpn should be enabled")
+		r.Log.Error(err, "vpn gw spec should enable ssl vpn or ipsec vpn")
+		return err
+	}
+
 	if gw.Spec.EnableSslVpn {
+		if gw.Spec.SslSecret == "" {
+			err := fmt.Errorf("ssl vpn secret is required")
+			r.Log.Error(err, "should set ssl vpn secret")
+			return err
+		}
+		if gw.Spec.DhSecret == "" {
+			err := fmt.Errorf("ssl vpn dh secret is required")
+			r.Log.Error(err, "should set ssl vpn dh secret")
+			return err
+		}
 		if gw.Spec.OvpnCipher == "" {
 			err := fmt.Errorf("ssl vpn cipher is required")
 			r.Log.Error(err, "should set cipher")
@@ -156,6 +184,29 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 		if gw.Spec.SslVpnImage == "" {
 			err := fmt.Errorf("ssl vpn image is required")
 			r.Log.Error(err, "should set ssl vpn image")
+			return err
+		}
+		if gw.Spec.OvpnProto == "udp" && gw.Spec.OvpnPort != 1149 {
+			err := fmt.Errorf("ssl vpn port should be 1149 when proto is udp")
+			r.Log.Error(err, "vpn gw spec port invalid")
+			return err
+		}
+		if gw.Spec.OvpnProto == "tcp" && gw.Spec.OvpnPort != 443 {
+			err := fmt.Errorf("ssl vpn port should be 443 when proto is tcp")
+			r.Log.Error(err, "vpn gw spec port invalid")
+			return err
+		}
+	}
+
+	if gw.Spec.EnableIpsecVpn {
+		if gw.Spec.IpsecSecret == "" {
+			err := fmt.Errorf("ipsec vpn secret is required")
+			r.Log.Error(err, "should set ipsec vpn secret")
+			return err
+		}
+		if gw.Spec.IpsecVpnImage == "" {
+			err := fmt.Errorf("ipsec vpn image is required")
+			r.Log.Error(err, "should set ipsec vpn image")
 			return err
 		}
 	}

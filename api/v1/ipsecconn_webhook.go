@@ -72,37 +72,37 @@ func (r *IpsecConn) validateIpsecConn() error {
 
 	if r.Spec.IkeVersion != "0" && r.Spec.IkeVersion != "1" && r.Spec.IkeVersion != "2" {
 		err := fmt.Errorf("ipsec connection spec ike version is invalid, ike version spec: %s", r.Spec.IkeVersion)
-		e := field.Invalid(field.NewPath("spec").Child("ikeVersion"), r.Spec.VpnGw, err.Error())
+		e := field.Invalid(field.NewPath("spec").Child("ikeVersion"), r.Spec.IkeVersion, err.Error())
 		allErrs = append(allErrs, e)
 	}
 
 	if r.Spec.Auth != "psk" && r.Spec.Auth != "pubkey" {
 		err := fmt.Errorf("ipsec connection spec auth is invalid, auth spec: %s", r.Spec.Auth)
-		e := field.Invalid(field.NewPath("spec").Child("auth"), r.Spec.VpnGw, err.Error())
+		e := field.Invalid(field.NewPath("spec").Child("auth"), r.Spec.Auth, err.Error())
 		allErrs = append(allErrs, e)
 	}
 
 	if r.Spec.RemotePublicIp == "" {
 		err := fmt.Errorf("ipsecConn remote public ip is required")
-		e := field.Invalid(field.NewPath("spec").Child("localPublicIp"), r.Spec.VpnGw, err.Error())
+		e := field.Invalid(field.NewPath("spec").Child("localPublicIp"), r.Spec.RemotePublicIp, err.Error())
 		allErrs = append(allErrs, e)
 	}
 
 	if r.Spec.RemotePrivateCidrs == "" {
 		err := fmt.Errorf("ipsecConn remote private cidrs is required")
-		e := field.Invalid(field.NewPath("spec").Child("vpnGw"), r.Spec.VpnGw, err.Error())
+		e := field.Invalid(field.NewPath("spec").Child("remotePrivateCidrs"), r.Spec.RemotePrivateCidrs, err.Error())
 		allErrs = append(allErrs, e)
 	}
 
 	if r.Spec.LocalPublicIp == "" {
 		err := fmt.Errorf("ipsecConn localPublicIp is required")
-		e := field.Invalid(field.NewPath("spec").Child("vpnGw"), r.Spec.VpnGw, err.Error())
+		e := field.Invalid(field.NewPath("spec").Child("localPublicIp"), r.Spec.LocalPublicIp, err.Error())
 		allErrs = append(allErrs, e)
 	}
 
 	if r.Spec.LocalPrivateCidrs == "" {
 		err := fmt.Errorf("ipsecConn local private cidrs is required")
-		e := field.Invalid(field.NewPath("spec").Child("localPrivateCidrs"), r.Spec.VpnGw, err.Error())
+		e := field.Invalid(field.NewPath("spec").Child("localPrivateCidrs"), r.Spec.LocalPrivateCidrs, err.Error())
 		allErrs = append(allErrs, e)
 	}
 
@@ -131,16 +131,17 @@ func (r *IpsecConn) ValidateUpdate(old runtime.Object) error {
 	}
 	oldIpsecConn, _ := old.(*IpsecConn)
 	var allErrs field.ErrorList
-	if oldIpsecConn.Spec.VpnGw != r.Spec.VpnGw {
+	if oldIpsecConn.Spec.VpnGw != "" && oldIpsecConn.Spec.VpnGw != r.Spec.VpnGw {
 		err := fmt.Errorf("ipsecConn vpn gw can not be changed")
 		e := field.Invalid(field.NewPath("spec").Child("vpnGw"), r.Spec.VpnGw, err.Error())
 		allErrs = append(allErrs, e)
 	}
-	if len(allErrs) != 0 {
-		return allErrs.ToAggregate()
+	if len(allErrs) == 0 {
+		return nil
 	}
+
 	// TODO(user): fill in your validation logic upon object update.
-	return nil
+	return allErrs.ToAggregate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
