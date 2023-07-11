@@ -54,13 +54,6 @@ func (r *IpsecConnReconciler) validateIpsecConnection(ipsecConn *vpngwv1.IpsecCo
 		return err
 	}
 
-	// TODO:// use webhook to validate vpn gw
-	// if ipsecConn.Status.VpnGw != "" && ipsecConn.Spec.VpnGw != ipsecConn.Status.VpnGw {
-	// 	err := fmt.Errorf("ipsecConn vpn gw can not be changed")
-	// 	r.Log.Error(err, "ipsecConn should not change vpn gw")
-	// 	return err
-	// }
-
 	if ipsecConn.Spec.IkeVersion != "0" && ipsecConn.Spec.IkeVersion != "1" && ipsecConn.Spec.IkeVersion != "2" {
 		err := fmt.Errorf("ipsec connection spec ike version is invalid, ike version spec: %s", ipsecConn.Spec.IkeVersion)
 		r.Log.Error(err, "ignore invalid ipsec connection")
