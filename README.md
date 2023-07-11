@@ -30,6 +30,12 @@ operator-sdk create api --group vpn-gw --version v1 --kind IpsecConn --resource 
 ## 重新生成代码
 ## 编写 reconcile 逻辑
 
+
+# operator-sdk create webhook  
+operator-sdk create webhook --group vpn-gw --version v1 --kind VpnGw --defaulting --programmatic-validation
+operator-sdk create webhook --group vpn-gw --version v1 --kind IpsecConn --defaulting --programmatic-validation
+
+
 ### 最后就是生成部署文件
 make manifests
 
@@ -188,3 +194,4 @@ kubectl get crd | grep cert-manager.io
 ### 6. 参考
 
 - [一个简单的 ipsec vpn 在公有云部署的项目就可以有 23k 的 star](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/README-zh.md#%E4%B8%8B%E4%B8%80%E6%AD%A5)
+- [operator-sdk](https://sdk.operatorframework.io/docs/building-operators/golang/webhook/)
