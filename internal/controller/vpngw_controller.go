@@ -116,7 +116,9 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 	}
 
 	if gw.Spec.Ip == "" {
-		r.Log.Info("vpn gw ip should random allocate", "name", namespacedName)
+		r.Log.Info("vpn gw pod ip random allocate", "name", namespacedName)
+	} else {
+		r.Log.Info("vpn gw pod ip set by user", "name", namespacedName, "ip", gw.Spec.Ip)
 	}
 
 	if gw.Spec.Replicas != 1 {
@@ -136,7 +138,7 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 			r.Log.Error(err, "should set ssl vpn proto")
 			return err
 		}
-		if gw.Spec.OvpnPort == 0 {
+		if gw.Spec.OvpnPort != 1149 && gw.Spec.OvpnPort != 443 {
 			err := fmt.Errorf("ssl vpn port is required")
 			r.Log.Error(err, "should set vpn port, udp 1149, tcp 443")
 			return err
@@ -433,7 +435,6 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	}
 
 	if len(gw.Spec.Selector) > 0 {
-		r.Log.Info("init vpn gw pod selector", "vpn gw", namespacedName)
 		selectors := make(map[string]string)
 		for _, v := range gw.Spec.Selector {
 			parts := strings.Split(strings.TrimSpace(v), ":")
@@ -446,14 +447,12 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 	}
 
 	if len(gw.Spec.Tolerations) > 0 {
-		r.Log.Info("init vpn gw pod tolerations", "vpn gw", namespacedName)
 		newSts.Spec.Template.Spec.Tolerations = gw.Spec.Tolerations
 	}
 
 	if gw.Spec.Affinity.NodeAffinity != nil ||
 		gw.Spec.Affinity.PodAffinity != nil ||
 		gw.Spec.Affinity.PodAntiAffinity != nil {
-		r.Log.Info("init vpn gw pod node affinity", "vpn gw", namespacedName)
 		newSts.Spec.Template.Spec.Affinity = &gw.Spec.Affinity
 	}
 
@@ -550,12 +549,12 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 
 			if err != nil {
 				r.Log.Error(err, "failed to get vpn gw pod")
-				// time.Sleep(1 * time.Second)
+				time.Sleep(1 * time.Second)
 				return SyncStateError, err
 			} else if pod.Status.Phase != "Running" {
 				err = fmt.Errorf("pod is not running now")
 				r.Log.Error(err, "wait a while to refresh vpn gw ipsec connections")
-				// time.Sleep(5 * time.Second)
+				time.Sleep(5 * time.Second)
 				return SyncStateError, err
 			}
 			r.Log.Info("found vpn gw pod", "pod", pod.Name)
@@ -573,7 +572,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 					err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
 					r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
 				}
-				// time.Sleep(5 * time.Second)
+				time.Sleep(2 * time.Second)
 				return SyncStateError, err
 			}
 			for _, conn := range res {
@@ -585,7 +584,7 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 	if r.isChanged(newGw, conns) {
 		err = r.Status().Update(context.Background(), newGw)
 		if err != nil {
-			r.Log.Error(err, "failed to update vpn gw after updating exist statefulset")
+			r.Log.Error(err, "failed to update vpn gw status")
 			return SyncStateError, err
 		}
 	}
@@ -637,7 +636,7 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	case SyncStateError:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, errRetry
+		return ctrl.Result{RequeueAfter: 3 * time.Second}, errRetry
 	case SyncStateErrorNoRetry:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
