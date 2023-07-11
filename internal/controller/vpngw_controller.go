@@ -23,12 +23,15 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	vpngwv1 "github.com/bobz965/kube-ovn-operator/api/v1"
+
 	// kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -49,16 +53,17 @@ const (
 
 	IpsecVpnLocalPortKey  = "ipsec-local"
 	IpsecVpnRemotePortKey = "ipsec-remote"
-	SslSecretPath         = "/etc/ovpn/certs"
-	DhSecretPath          = "/etc/ovpn/dh"
-	IpsecVpnSecretPath    = "/etc/ipsec/certs"
-	SslVpnStartUpCMD      = "/etc/openvpn/setup/configure.sh"
-	// IpsecVpnInitCMD = "/etc/ipsec/setup/configure.sh"
-	IpsecVpnStartUpCMD = "/usr/sbin/charon-systemd"
-	// IpsecVpnReloadCMD  = "/usr/sbin/swanctl --load-all --noprompt"
 
-	EnableSslVpnLabel   = "enable_ssl_vpn"
-	EnableIpsecVpnLabel = "enable_ipsec_vpn"
+	SslSecretPath      = "/etc/ovpn/certs"
+	DhSecretPath       = "/etc/ovpn/dh"
+	IpsecVpnSecretPath = "/etc/ipsec/certs"
+
+	SslVpnStartUpCMD               = "/etc/openvpn/setup/configure.sh"
+	IpsecVpnStartUpCMD             = "/usr/sbin/charon-systemd"
+	IpsecConnectionRefreshTemplate = "/connection.sh refresh %s"
+
+	EnableSslVpnLabel   = "enable-ssl-vpn"
+	EnableIpsecVpnLabel = "enable-ipsec-vpn"
 
 	KubeovnIpAddressAnnotation = "ovn.kubernetes.io/ip_address"
 
@@ -75,8 +80,7 @@ const (
 	IpSecNatPortKey    = "nat"
 	IpSecNatPort       = 4500
 
-	IpsecProto  = "UDP"
-	PublicIpKey = "PUBLIC_IP"
+	IpsecProto = "UDP"
 
 	// vpn gw pod env
 	OvpnProtoKey      = "OVPN_PROTO"
@@ -91,11 +95,12 @@ const (
 // VpnGwReconciler reconciles a VpnGw object
 type VpnGwReconciler struct {
 	client.Client
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
-	Namespace string
-	Handler   func(gw *vpngwv1.VpnGw, req ctrl.Request) SyncState
-	Reload    chan event.GenericEvent
+	KubeClient kubernetes.Interface
+	RestConfig *rest.Config
+	Log        logr.Logger
+	Scheme     *runtime.Scheme
+	Namespace  string
+	Reload     chan event.GenericEvent
 }
 
 func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string) error {
@@ -104,6 +109,12 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 		r.Log.Error(err, "should set subnet")
 		return err
 	}
+	if gw.Status.Subnet != "" && gw.Spec.Subnet != gw.Status.Subnet {
+		err := fmt.Errorf("vpn gw subnet not support change")
+		r.Log.Error(err, "vpn gw should not change subnet")
+		return err
+	}
+
 	if gw.Spec.Ip == "" {
 		r.Log.Info("vpn gw ip should random allocate", "name", namespacedName)
 	}
@@ -149,10 +160,9 @@ func (r *VpnGwReconciler) validateVpnGw(gw *vpngwv1.VpnGw, namespacedName string
 	return nil
 }
 
-func (r *VpnGwReconciler) isChanged(gw *vpngwv1.VpnGw) bool {
+func (r *VpnGwReconciler) isChanged(gw *vpngwv1.VpnGw, ipsecConnections []string) bool {
 	changed := false
 	if gw.Status.Subnet == "" && gw.Spec.Subnet != "" {
-		// subnet not support change
 		gw.Status.Subnet = gw.Spec.Subnet
 		changed = true
 	}
@@ -200,15 +210,16 @@ func (r *VpnGwReconciler) isChanged(gw *vpngwv1.VpnGw) bool {
 
 	if gw.Status.EnableIpsecVpn != gw.Spec.EnableIpsecVpn {
 		gw.Status.EnableIpsecVpn = gw.Spec.EnableIpsecVpn
-		if gw.Status.IpsecRemoteAddrs != gw.Spec.IpsecRemoteAddrs {
-			gw.Status.IpsecRemoteAddrs = gw.Spec.IpsecRemoteAddrs
-		}
-		if gw.Status.IpsecRemoteAddrs != gw.Spec.IpsecRemoteAddrs {
-			gw.Status.IpsecRemoteAddrs = gw.Spec.IpsecRemoteAddrs
-		}
 		if gw.Status.IpsecVpnImage != gw.Spec.IpsecVpnImage {
 			gw.Status.IpsecVpnImage = gw.Spec.IpsecVpnImage
+		}
+		changed = true
+	}
 
+	if gw.Status.EnableIpsecVpn && ipsecConnections != nil {
+		if !reflect.DeepEqual(gw.Spec.IpsecConnections, ipsecConnections) {
+			gw.Spec.IpsecConnections = ipsecConnections
+			gw.Status.IpsecConnections = ipsecConnections
 		}
 		changed = true
 	}
@@ -304,10 +315,6 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					Name:  OvpnSubnetCidrKey,
 					Value: gw.Spec.OvpnSubnetCidr,
 				},
-				{
-					Name:  PublicIpKey,
-					Value: gw.Spec.PublicIp,
-				},
 			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			SecurityContext: &corev1.SecurityContext{
@@ -377,20 +384,6 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 					ContainerPort: IpSecNatPort,
 					Name:          IpSecNatPortKey,
 					Protocol:      corev1.Protocol(IpsecProto)},
-			},
-			Env: []corev1.EnvVar{
-				{
-					Name:  IpsecRemoteAddrsKey,
-					Value: gw.Spec.IpsecRemoteAddrs,
-				},
-				{
-					Name:  IpsecRemoteTsKey,
-					Value: gw.Spec.IpsecRemoteTs,
-				},
-				{
-					Name:  PublicIpKey,
-					Value: gw.Spec.PublicIp,
-				},
 			},
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			SecurityContext: &corev1.SecurityContext{
@@ -471,13 +464,13 @@ func (r *VpnGwReconciler) statefulSetForVpnGw(gw *vpngwv1.VpnGw, oldSts *appsv1.
 
 // belonging to the given vpn gw CR name.
 func labelsForVpnGw(gw *vpngwv1.VpnGw) map[string]string {
-	return map[string]string{"app": "vpngw",
+	return map[string]string{
 		EnableSslVpnLabel:   strconv.FormatBool(gw.Spec.EnableSslVpn),
 		EnableIpsecVpnLabel: strconv.FormatBool(gw.Spec.EnableIpsecVpn),
 	}
 }
 
-func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Request) SyncState {
+func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.VpnGw) (SyncState, error) {
 	// create vpn gw statefulset
 	namespacedName := req.NamespacedName.String()
 	r.Log.Info("start handleAddOrUpdateVpnGw", "vpn gw", namespacedName)
@@ -487,11 +480,11 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 	if err := r.validateVpnGw(gw, namespacedName); err != nil {
 		r.Log.Error(err, "failed to validate vpn gw")
 		// invalid spec no retry
-		return SyncStateErrorNoRetry
+		return SyncStateErrorNoRetry, err
 	}
 
 	// create or update statefulset
-	var needToCreate, needToUpdate bool
+	needToCreate := false
 	oldSts := &appsv1.StatefulSet{}
 	err := r.Get(context.Background(), req.NamespacedName, oldSts)
 	if err != nil {
@@ -499,48 +492,123 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(gw *vpngwv1.VpnGw, req ctrl.Req
 			needToCreate = true
 		} else {
 			r.Log.Error(err, "failed to get old statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
 	}
+	newGw := gw.DeepCopy()
 	if needToCreate {
 		newSts := r.statefulSetForVpnGw(gw, nil)
 		err = r.Create(context.Background(), newSts)
 		if err != nil {
 			r.Log.Error(err, "failed to create the new statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
-		err = r.Status().Update(context.Background(), gw)
-		if err != nil {
-			r.Log.Error(err, "failed to update vpn gw after creating new statefulset")
-			return SyncStateError
-		}
-		return SyncStateSuccess
-	}
-	gw = gw.DeepCopy()
-	if !needToCreate && r.isChanged(gw) {
-		needToUpdate = true
-	}
-	if needToUpdate {
+		time.Sleep(5 * time.Second)
+	} else if r.isChanged(newGw, nil) {
+		// update statefulset
 		newSts := r.statefulSetForVpnGw(gw, oldSts.DeepCopy())
 		err = r.Update(context.Background(), newSts)
 		if err != nil {
 			r.Log.Error(err, "failed to update the statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
-		err = r.Status().Update(context.Background(), gw)
+		time.Sleep(5 * time.Second)
+	}
+	var conns []string
+	if gw.Spec.EnableIpsecVpn {
+		// fetch ipsec connections
+		res, err := r.getIpsecConnections(context.Background(), gw)
+		if err != nil {
+			r.Log.Error(err, "failed to list vpn gw ipsec connections")
+			return SyncStateError, err
+		}
+		// format ipsec connections
+		connections := ""
+		for _, v := range res {
+			if v.Spec.VpnGw == "" || v.Spec.VpnGw != gw.Name {
+				err := fmt.Errorf("ipsec connection spec vpn gw is invalid, spec vpn gw: %s", v.Spec.VpnGw)
+				r.Log.Error(err, "ignore invalid ipsec connection")
+				continue
+			}
+			if v.Spec.Auth == "" || v.Spec.IkeVersion == "" || v.Spec.Proposals == "" ||
+				v.Spec.LocalCN == "" || v.Spec.LocalPublicIp == "" || v.Spec.LocalPrivateCidrs == "" ||
+				v.Spec.RemoteCN == "" || v.Spec.RemotePublicIp == "" || v.Spec.RemotePrivateCidrs == "" {
+				err := fmt.Errorf("invalid ipsec connection, exist empty spec: %+v", v)
+				r.Log.Error(err, "ignore invalid ipsec connection")
+			}
+			connections += fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s,", v.Name, v.Spec.Auth, v.Spec.IkeVersion, v.Spec.Proposals,
+				v.Spec.LocalCN, v.Spec.LocalPublicIp, v.Spec.LocalPrivateCidrs,
+				v.Spec.RemoteCN, v.Spec.RemotePublicIp, v.Spec.RemotePrivateCidrs)
+		}
+		if connections != "" {
+			// get pod from statefulset
+			pod := &corev1.Pod{}
+			err = r.Get(context.Background(), types.NamespacedName{
+				Name:      gw.Name + "-0",
+				Namespace: gw.Namespace,
+			}, pod)
+
+			if err != nil {
+				r.Log.Error(err, "failed to get vpn gw pod")
+				// time.Sleep(1 * time.Second)
+				return SyncStateError, err
+			} else if pod.Status.Phase != "Running" {
+				err = fmt.Errorf("pod is not running now")
+				r.Log.Error(err, "wait a while to refresh vpn gw ipsec connections")
+				// time.Sleep(5 * time.Second)
+				return SyncStateError, err
+			}
+			r.Log.Info("found vpn gw pod", "pod", pod.Name)
+			// exec pod to run cmd to refresh ipsec connections
+			cmd := fmt.Sprintf(IpsecConnectionRefreshTemplate, connections)
+			r.Log.Info("start run cmd", "cmd", cmd)
+			// refresh ipsec connections by exec pod
+			stdOutput, errOutput, err := ExecuteCommandInContainer(r.KubeClient, r.RestConfig, pod.Namespace, pod.Name, IpsecVpnServer, []string{"/bin/bash", "-c", cmd}...)
+			if err != nil {
+				if len(errOutput) > 0 {
+					err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
+					r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
+				}
+				if len(stdOutput) > 0 {
+					err = fmt.Errorf("failed to ExecuteCommandInContainer, errOutput: %v", errOutput)
+					r.Log.Error(err, "failed to refresh vpn gw ipsec connections")
+				}
+				// time.Sleep(5 * time.Second)
+				return SyncStateError, err
+			}
+			for _, conn := range res {
+				conns = append(conns, conn.Name)
+			}
+		}
+	}
+	newGw = gw.DeepCopy()
+	if r.isChanged(newGw, conns) {
+		err = r.Status().Update(context.Background(), newGw)
 		if err != nil {
 			r.Log.Error(err, "failed to update vpn gw after updating exist statefulset")
-			return SyncStateError
+			return SyncStateError, err
 		}
-		return SyncStateSuccess
 	}
-	return SyncStateSuccess
+	return SyncStateSuccess, nil
 }
 
-//+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/finalizers,verbs=update
-//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// Note: you need a blank line after this list in order for the controller to pick this up.
+
+// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/finalizers,verbs=update
+// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/scale,verbs=get;watch;update
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/finalizers,verbs=get;list;watch
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods/exec,verbs=create
+// +kubebuilder:rbac:groups=core,resources=pods/log,verbs=get
+// +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -564,15 +632,12 @@ func (r *VpnGwReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, nil
 	}
 
-	r.Handler = r.handleAddOrUpdateVpnGw
-	// TODO:// Handler should set in main.go
-
-	res := r.Handler(gw, req)
+	res, err := r.handleAddOrUpdateVpnGw(req, gw)
 	switch res {
 	case SyncStateError:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
-		return ctrl.Result{}, errRetry
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, errRetry
 	case SyncStateErrorNoRetry:
 		updateErrors.Inc()
 		r.Log.Error(err, "failed to handle vpn gw")
@@ -600,6 +665,7 @@ func (r *VpnGwReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			),
 		).
 		Owns(&appsv1.StatefulSet{}).
+		Owns(&vpngwv1.IpsecConn{}).
 		Complete(r)
 }
 
@@ -613,4 +679,14 @@ func (r *VpnGwReconciler) getVpnGw(ctx context.Context, name types.NamespacedNam
 		return nil, err
 	}
 	return &res, nil
+}
+
+// returns all ipsec connections who has labels about the vpn gw
+func (r *VpnGwReconciler) getIpsecConnections(ctx context.Context, gw *vpngwv1.VpnGw) ([]vpngwv1.IpsecConn, error) {
+	var res vpngwv1.IpsecConnList
+	err := r.List(ctx, &res, client.MatchingLabels{VpnGwLabel: gw.Name})
+	if err != nil {
+		return nil, err
+	}
+	return res.Items, nil
 }

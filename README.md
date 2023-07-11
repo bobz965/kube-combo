@@ -21,6 +21,8 @@ operator-sdk init --domain kube-ovn-operator.com --repo github.com/bobz965/kube-
 # 该步骤后可创建 api
 # operator-sdk create api
 operator-sdk create api --group vpn-gw --version v1 --kind VpnGw --resource --controller
+operator-sdk create api --group vpn-gw --version v1 --kind IpsecConn --resource --controller
+
 
 #  make generate   生成controller 相关的 informer clientset 等代码
  
@@ -46,7 +48,23 @@ make manifests
 
 ### 2.2 ipsec vpn
 
-该功能基于 openvpn 实现，[用于 Site-to-Site 场景](https://github.com/strongswan/strongswan#site-to-site-case) ，推荐使用 IKEv2， IKEv1 安全性较低
+该功能基于 strongSwan 实现，[用于 Site-to-Site 场景](https://github.com/strongswan/strongswan#site-to-site-case) ，推荐使用 IKEv2， IKEv1 安全性较低
+
+strongSwan 的主要包括两个配置
+
+- /etc/swanctl/swanctl.conf
+- /etc/hosts
+
+swanctl 配置中的 connection 中的域名解析 在 /etc/hosts 中管理，这两个配置都基于[j2](https://github.com/kolypto/j2cli) 来生成，基于 pod exec 将 vpn gw 依赖的 ipsec connection crd 中的信息保存在 connection.yaml 中。
+
+``` bash
+
+j2 swanctl.conf.j2 data.yaml
+j2 hosts.j2 data.yaml
+
+# mv swanctl.conf /etc/swanctl/swanctl.conf
+# mv hosts /etc/hosts
+```
 
 ## 3. 维护
 
@@ -87,7 +105,6 @@ make bundle bundle-build bundle-push
 ```
 
 ### 3.2  部署
-
 
 目前认为 olm 本身不够成熟，基于 `make deploy` 来部署
 
@@ -160,3 +177,14 @@ kubectl get crd | grep cert-manager.io
 
 
 ```
+
+### 5. 通用性
+
+目前 vpn gw pod 只需要一个 IP，所以只需要保证固定内网 IP 是符合 k8s 通用规范即可保证能够适用于其他 CNI。
+该 IP 对应的 nat， 以及如何公网互联的路由和该功能是完全解耦的。
+
+各大公有云都是 sdn 网络，支持在 k8s 托管， 基于该 vpn gw operator 互相打通，比起申请虚拟机资源部署的方式应该更节省成本。
+
+### 6. 参考
+
+- [一个简单的 ipsec vpn 在公有云部署的项目就可以有 23k 的 star](https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/README-zh.md#%E4%B8%8B%E4%B8%80%E6%AD%A5)
