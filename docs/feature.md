@@ -2,10 +2,11 @@
 
 ## 1. vpn gw
 
-## 1.1 ssl vpn gw
+### 1.1 ssl vpn gw
+
 该功能基于 openvpn 实现，可以通过公网 ip，在个人 电脑，手机客户端直接访问 kube-ovn 自定义 vpc subnet 内部的 pod 以及 switch lb 对应是的 svc endpoint。
 
-## 1.2 ipsec vpn gw
+### 1.2 ipsec vpn gw
 
 该功能基于 strongSwan 实现，[用于 Site-to-Site 场景](https://github.com/strongswan/strongswan#site-to-site-case) ，推荐使用 IKEv2， IKEv1 安全性较低
 
@@ -26,6 +27,7 @@ j2 hosts.j2 data.yaml
 ```
 
 ## 2. LB
-### 2.1 haproxy lb
-### 2.2 nginx lb
 
+### 2.1 haproxy lb
+
+### 2.2 nginx lb

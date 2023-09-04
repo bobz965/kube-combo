@@ -1,4 +1,4 @@
-## 1. Code init
+# 1. Code init
 
 ``` bash
 
