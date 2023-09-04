@@ -13,14 +13,14 @@ spec:
     - description: VpnGw is the Schema for the vpngws API
       displayName: Vpn Gw
       kind: VpnGw
-      name: vpngws.vpn-gw.kube-ovn-operator.com
+      name: vpngws.vpn-gw.kube-combo.com
       statusDescriptors:
       - description: Conditions store the status conditions of the vpn gw instances
         displayName: Conditions
         path: conditions
       version: v1
-  description: kube-ovn-operator
-  displayName: kube-ovn-operator
+  description: kube-combo
+  displayName: kube-combo
   icon:
   - base64data: ""
     mediatype: ""
@@ -38,11 +38,11 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-  - kube-ovn-operator
+  - kube-combo
   links:
   - name: Vpn Gw
     url: https://vpn-gw.domain
   maturity: alpha
   provider:
-    name: kube-ovn-operator
+    name: kube-combo
   version: 0.0.0

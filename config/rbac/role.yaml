@@ -84,7 +84,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - vpn-gw.kube-ovn-operator.com
+  - vpn-gw.kube-combo.com
   resources:
   - ipsecconns
   verbs:
@@ -96,13 +96,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - vpn-gw.kube-ovn-operator.com
+  - vpn-gw.kube-combo.com
   resources:
   - ipsecconns/finalizers
   verbs:
   - update
 - apiGroups:
-  - vpn-gw.kube-ovn-operator.com
+  - vpn-gw.kube-combo.com
   resources:
   - ipsecconns/status
   verbs:
@@ -110,7 +110,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - vpn-gw.kube-ovn-operator.com
+  - vpn-gw.kube-combo.com
   resources:
   - vpngws
   verbs:
@@ -122,13 +122,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - vpn-gw.kube-ovn-operator.com
+  - vpn-gw.kube-combo.com
   resources:
   - vpngws/finalizers
   verbs:
   - update
 - apiGroups:
-  - vpn-gw.kube-ovn-operator.com
+  - vpn-gw.kube-combo.com
   resources:
   - vpngws/status
   verbs:

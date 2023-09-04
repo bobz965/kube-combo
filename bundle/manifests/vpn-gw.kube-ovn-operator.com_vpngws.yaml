@@ -4,9 +4,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: vpngws.vpn-gw.kube-ovn-operator.com
+  name: vpngws.vpn-gw.kube-combo.com
 spec:
-  group: vpn-gw.kube-ovn-operator.com
+  group: vpn-gw.kube-combo.com
   names:
     kind: VpnGw
     listKind: VpnGwList

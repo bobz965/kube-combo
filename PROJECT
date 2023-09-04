@@ -2,31 +2,31 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: kube-ovn-operator.com
+domain: kube-combo.com
 layout:
 - go.kubebuilder.io/v4-alpha
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: vpn-gw
-repo: github.com/bobz965/kube-ovn-operator
+repo: github.com/bobz965/kube-combo
 resources:
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: kube-ovn-operator.com
+  domain: kube-combo.com
   group: vpn-gw
   kind: VpnGw
-  path: github.com/bobz965/kube-ovn-operator/api/v1
+  path: github.com/bobz965/kube-combo/api/v1
   version: v1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: kube-ovn-operator.com
+  domain: kube-combo.com
   group: vpn-gw
   kind: IpsecConn
-  path: github.com/bobz965/kube-ovn-operator/api/v1
+  path: github.com/bobz965/kube-combo/api/v1
   version: v1
 version: "3"

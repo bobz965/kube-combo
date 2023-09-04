@@ -21,7 +21,7 @@ var (
 		Namespace: "default",
 		Subsystem: "kube_ovn_operator",
 		Name:      "config_loaded_bool",
-		Help:      "1 if the kube-ovn-operator configuration was successfully loaded at least once.",
+		Help:      "1 if the kube-combo configuration was successfully loaded at least once.",
 	})
 
 	configStale = prometheus.NewGauge(prometheus.GaugeOpts{

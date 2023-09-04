@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	vpngwv1 "github.com/bobz965/kube-ovn-operator/api/v1"
-	"github.com/bobz965/kube-ovn-operator/internal/controller"
+	vpngwv1 "github.com/bobz965/kube-combo/api/v1"
+	"github.com/bobz965/kube-combo/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -77,7 +77,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "a7db789a.kube-ovn-operator.com",
+		LeaderElectionID:       "a7db789a.kube-combo.com",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly

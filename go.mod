@@ -1,4 +1,4 @@
-module github.com/bobz965/kube-ovn-operator
+module github.com/bobz965/kube-combo
 
 go 1.19
 

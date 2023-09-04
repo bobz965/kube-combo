@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	vpngwv1 "github.com/bobz965/kube-ovn-operator/api/v1"
+	vpngwv1 "github.com/bobz965/kube-combo/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 

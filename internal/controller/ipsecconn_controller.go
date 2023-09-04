@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	vpngwv1 "github.com/bobz965/kube-ovn-operator/api/v1"
+	vpngwv1 "github.com/bobz965/kube-combo/api/v1"
 	"github.com/go-logr/logr"
 )
 
@@ -123,9 +123,9 @@ func (r *IpsecConnReconciler) handleAddOrUpdateIpsecConnection(req ctrl.Request,
 	return SyncStateSuccess, err
 }
 
-//+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/finalizers,verbs=update
+//+kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=ipsecconns,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=ipsecconns/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=ipsecconns/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

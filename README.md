@@ -1,4 +1,4 @@
-# kube-ovn-operator
+# kube-combo
 
 该项目用于在 kube-ovn-cni 的一个**补充**，用于实现一些 kube-ovn-cni 中属于间接关联的一些网络应用。直接关联的网络功能应直接在 kube-ovn 中实现。
 为了保持该项目的定位的清晰和轻量：
@@ -11,10 +11,10 @@
 
 ``` bash
 
-operator-sdk init --domain kube-ovn-operator.com --repo github.com/bobz965/kube-ovn-operator --plugins=go/v4-alpha
+operator-sdk init --domain kube-combo.com --repo github.com/bobz965/kube-combo --plugins=go/v4-alpha
 
-# we'll use a domain of kube-ovn-operator.com
-# so all API groups will be <group>.kube-ovn-operator.com
+# we'll use a domain of kube-combo.com
+# so all API groups will be <group>.kube-combo.com
 
 # --plugins=go/v4-alpha  mac arm 芯片需要指定
 
@@ -110,8 +110,8 @@ make bundle bundle-build bundle-push
 
 ``` bash
 
-cd config/manager && /root/kube-ovn-operator/bin/kustomize edit set image controller=registry.cn-hangzhou.aliyuncs.com/bobz/kube-ovn-operator:latest
-/root/kube-ovn-operator/bin/kustomize build config/default | kubectl apply -f -
+cd config/manager && /root/kube-combo/bin/kustomize edit set image controller=registry.cn-hangzhou.aliyuncs.com/bobz/kube-combo:latest
+/root/kube-combo/bin/kustomize build config/default | kubectl apply -f -
 
 
 ```
@@ -131,7 +131,7 @@ chmod +x install.sh
 
 # 运行 operator
 
-operator-sdk run bundle registry.cn-hangzhou.aliyuncs.com/bobz/kube-ovn-operator-bundle:v0.0.1
+operator-sdk run bundle registry.cn-hangzhou.aliyuncs.com/bobz/kube-combo-bundle:v0.0.1
 
 # 检查 operator 已安装
 

@@ -1,4 +1,4 @@
-apiVersion: vpn-gw.kube-ovn-operator.com/v1
+apiVersion: vpn-gw.kube-combo.com/v1
 kind: IpsecConn
 metadata:
   labels:

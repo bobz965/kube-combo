@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	vpngwv1 "github.com/bobz965/kube-ovn-operator/api/v1"
+	vpngwv1 "github.com/bobz965/kube-combo/api/v1"
 
 	// kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -593,12 +593,12 @@ func (r *VpnGwReconciler) handleAddOrUpdateVpnGw(req ctrl.Request, gw *vpngwv1.V
 
 // Note: you need a blank line after this list in order for the controller to pick this up.
 
-// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=vpngws/finalizers,verbs=update
-// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=vpn-gw.kube-ovn-operator.com,resources=ipsecconns/finalizers,verbs=update
+// +kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=vpngws,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=vpngws/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=vpngws/finalizers,verbs=update
+// +kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=ipsecconns,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=ipsecconns/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=vpn-gw.kube-combo.com,resources=ipsecconns/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch
 // +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=statefulsets/scale,verbs=get;watch;update

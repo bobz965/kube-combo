@@ -30,10 +30,10 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # This variable is used to construct full image tags for bundle and catalog images.
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
-# kube-ovn-operator.com/vpn-gw-bundle:$VERSION and kube-ovn-operator.com/vpn-gw-catalog:$VERSION.
+# kube-combo.com/vpn-gw-bundle:$VERSION and kube-combo.com/vpn-gw-catalog:$VERSION.
 #
-# IMAGE_TAG_BASE ?= kube-ovn-operator.com/vpn-gw
-IMAGE_TAG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/kube-ovn-operator
+# IMAGE_TAG_BASE ?= kube-combo.com/vpn-gw
+IMAGE_TAG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/kube-combo
 SSL_VPN_IMG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/openvpn
 IPSEC_VPN_IMG_BASE ?= registry.cn-hangzhou.aliyuncs.com/bobz/strongswan
 

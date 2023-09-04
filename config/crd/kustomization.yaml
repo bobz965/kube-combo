@@ -2,8 +2,8 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/vpn-gw.kube-ovn-operator.com_vpngws.yaml
-- bases/vpn-gw.kube-ovn-operator.com_ipsecconns.yaml
+- bases/vpn-gw.kube-combo.com_vpngws.yaml
+- bases/vpn-gw.kube-combo.com_ipsecconns.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
