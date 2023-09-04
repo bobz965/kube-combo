@@ -1,48 +1,16 @@
 # 维护
 
-前置依赖：
+前置依赖
+
 - cert-manager
 
 提供多种方式部署：
+
 - 可以基于 helm 部署
 - 可以基于 make deploy 部署
 - 可以基于 kubectl apply 部署
 
-
-## 1. build push
-
-Docker
-
-``` bash
-make docker-build docker-push
-
-# make docker-build 
-# make docker-push
-
-# build openvpn image
-
-make docker-build-ssl-vpn docker-push-ssl-vpn
-
-# build ipsec image
-make docker-build-ipsec-vpn docker-push-ipsec-vpn
-
-```
-
-OLM
-
-``` bash
-make bundle bundle-build bundle-push
-
-# make bundle
-# make bundle-build
-# make bundle-push
-
-## 目前不支持直接测试，必须要先把 bundle 传到 registry，有 issue 记录: https://github.com/operator-framework/operator-sdk/issues/6432
-
-
-```
-
-## 2. install
+## 1. install
 
 目前认为 olm 本身不够成熟，基于 `make deploy` 来部署
 

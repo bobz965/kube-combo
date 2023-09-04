@@ -1,4 +1,4 @@
-# 1. Code init
+# 1. code init
 
 ``` bash
 
@@ -23,5 +23,38 @@ operator-sdk create api --group vpn-gw --version v1 --kind IpsecConn --resource 
 
 ### 最后就是生成部署文件
 make manifests
+
+```
+
+## 1. build push
+
+Docker
+
+``` bash
+make docker-build docker-push
+
+# make docker-build 
+# make docker-push
+
+# build openvpn image
+
+make docker-build-ssl-vpn docker-push-ssl-vpn
+
+# build ipsec image
+make docker-build-ipsec-vpn docker-push-ipsec-vpn
+
+```
+
+OLM
+
+``` bash
+make bundle bundle-build bundle-push
+
+# make bundle
+# make bundle-build
+# make bundle-push
+
+## 目前不支持直接测试，必须要先把 bundle 传到 registry，有 issue 记录: https://github.com/operator-framework/operator-sdk/issues/6432
+
 
 ```
