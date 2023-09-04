@@ -9,7 +9,7 @@ plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: vpn-gw
-repo: github.com/bobz965/kube-combo
+repo: github.com/kubecombo/kube-combo
 resources:
 - api:
     crdVersion: v1
@@ -18,7 +18,7 @@ resources:
   domain: kube-combo.com
   group: vpn-gw
   kind: VpnGw
-  path: github.com/bobz965/kube-combo/api/v1
+  path: github.com/kubecombo/kube-combo/api/v1
   version: v1
 - api:
     crdVersion: v1
@@ -27,6 +27,6 @@ resources:
   domain: kube-combo.com
   group: vpn-gw
   kind: IpsecConn
-  path: github.com/bobz965/kube-combo/api/v1
+  path: github.com/kubecombo/kube-combo/api/v1
   version: v1
 version: "3"

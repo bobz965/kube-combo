@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	vpngwv1 "github.com/bobz965/kube-combo/api/v1"
+	vpngwv1 "github.com/kubecombo/kube-combo/api/v1"
 
 	// kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
 	appsv1 "k8s.io/api/apps/v1"

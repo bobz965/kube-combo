@@ -1,4 +1,4 @@
-module github.com/bobz965/kube-combo
+module github.com/kubecombo/kube-combo
 
 go 1.19
 

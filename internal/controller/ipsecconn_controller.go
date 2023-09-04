@@ -30,8 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	vpngwv1 "github.com/bobz965/kube-combo/api/v1"
 	"github.com/go-logr/logr"
+	vpngwv1 "github.com/kubecombo/kube-combo/api/v1"
 )
 
 const (

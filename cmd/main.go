@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	vpngwv1 "github.com/bobz965/kube-combo/api/v1"
-	"github.com/bobz965/kube-combo/internal/controller"
+	vpngwv1 "github.com/kubecombo/kube-combo/api/v1"
+	"github.com/kubecombo/kube-combo/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
